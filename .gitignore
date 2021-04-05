@@ -1,0 +1,9 @@
+config.json
+package.json
+node_modules
+race-analysis.json
+strava-data.json
+weather-data.json
+package-lock.json
+.env
+.vscode/launch.json
