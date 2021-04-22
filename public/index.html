@@ -374,7 +374,18 @@
                 DISPLAY: val => val,
                 GENERATE: run => run.suffer_score
             },
-
+            calories: {
+                TITLE: "Calories",
+                SYMBOL: "Cal",
+                DISPLAY: val => val,
+                GENERATE: run => run.calories
+            },
+            average_heartrate: {
+                TITLE: "Average Heartrate",
+                SYMBOL: "bpm",
+                DISPLAY: val => val,
+                GENERATE: run => run.average_heartrate
+            },
             best_efforts: {
                 TITLE: "Best Efforts",
                 DROP_DOWN: ['']
@@ -713,8 +724,8 @@
 
         (async () => {
             
-            let config = await fetch("/config");
-
+            let configReq = await fetch("/config");
+            let config = await configReq.json();
             let response = await fetch("/getData");
             let json = await response.json();
 
