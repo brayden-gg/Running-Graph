@@ -1,30 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Strava OAuth Token</title>
-</head>
-<body>
-    <p>code: <span id="code"> waiting...</span></p>
-    <p>Updated: <span id="updated">waiting...</span></p>
-    <p>Access Token: <span id="access-token">waiting...</span></p>
-    <p></p>
-    <script>
-        let query = new URLSearchParams(window.location.search);
-        let code = query.get('code');
-        let resp;
-        let json
-        document.getElementById('code').innerText = code;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>Strava OAuth Token</title>
+    </head>
+    <body>
+        <p>code: <span id="code"> waiting...</span></p>
+        <p>Updated: <span id="updated">waiting...</span></p>
+        <p>Access Token: <span id="access-token">waiting...</span></p>
+        <p></p>
+        <script>
+            let query = new URLSearchParams(window.location.search);
+            let code = query.get("code");
+            let resp;
+            let json;
+            document.getElementById("code").innerText = code;
 
-        (async ()=>{
-            resp = await fetch('/fixCode/' + code);
-            json = await resp.json();
-            document.getElementById('updated').innerText = json.success;
-            document.getElementById('access-token').innerText = json.access_token;
-            window.location.replace("index.html" + window.location.search);
-        })()
-    </script>
-</body>
+            (async () => {
+                resp = await fetch("/fixCode/" + code);
+                json = await resp.json();
+                document.getElementById("updated").innerText = json.success;
+                document.getElementById("access-token").innerText = json.access_token;
+                window.location.replace("index.html" + window.location.search);
+            })();
+        </script>
+    </body>
 </html>
