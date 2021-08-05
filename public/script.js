@@ -13,7 +13,6 @@ let graph;
 let xAxis = query.get("x") || "date";
 let yAxis = query.get("y") || "pace";
 
-let flipFilter = query.get("flipFilter") || "off";
 let enableTrendLine = query.get("trendLine") || "off";
 let bestEffortY = query.get("bestEffortY") || "400m";
 let bestEffortX = query.get("bestEffortX") || "400m";
