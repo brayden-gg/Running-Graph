@@ -2,9 +2,11 @@
 
 ### Uses the Strava and Darksky APIs to plot various metrics
 
-### TODO:
+### Feature Ideas:
 
--   [ ] Improve file structure
+-   [x] Improve file structure
 -   [ ] Make dropdown menus more modular/OO
+-   [ ] Add support for other activity types
 -   [ ] Replace massive JSON file with an actual database
 -   [ ] Add an actual readme file with pictures, descriptions etc.
+-   [ ] Allow for annotations based on season/injuries/PRs
