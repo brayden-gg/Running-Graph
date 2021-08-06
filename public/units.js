@@ -169,19 +169,19 @@ let units = {
     },
 
     equivalent_times: {
-        TITLE: "Equivalent Race Times",
+        TITLE: "Equiv. Race Time",
     },
 
     flat_equivalent: {
-        TITLE: "Equivalent Race Times (Flat)",
+        TITLE: "Equiv. Race Time (Flat)",
     },
 
     temp_equivalent: {
-        TITLE: "Equivalent Race Times (at 60℉)",
+        TITLE: "Equiv. Race Time (60℉)",
     },
 
     flat_temp_equivalent: {
-        TITLE: "Equivalent Race Times (Flat and at 60℉)",
+        TITLE: "Equiv. Race Time (Flat/60℉)",
     },
 
     toFlat: {
@@ -192,14 +192,14 @@ let units = {
     },
 
     to60: {
-        TITLE: "Race Time at (at 60℉)",
+        TITLE: "Race Time at (60℉)",
         SYMBOL: "Seconds",
         DISPLAY: Time.stringify,
         GENERATE: run => run.race_analysis?.to60,
     },
 
     toFlat_and_to60: {
-        TITLE: "Race Time (Flat and at 60℉)",
+        TITLE: "Race Time (Flat/60℉)",
         SYMBOL: "Seconds",
         DISPLAY: Time.stringify,
         GENERATE: run => run?.race_analysis.toFlat_and_to60,
@@ -364,75 +364,79 @@ let units = {
     },
 };
 
+let bestEffortDistances = ["400m", "1/2 mile", "1k", "1 mile", "2 mile", "5k", "10k", "15k", "10 mile", "20k", "half marathon", "30k", "marathon", "50k"];
+let equivDistances = ["1500 m", "1 mile", "3000 m", "2 miles", "5k"];
+
 let modularAxes = {
     best_efforts: {
-        add: params => {
-            let d = params.bestEffort;
-            units["best_efforts_" + d] = {
-                TITLE: "Best Effort (" + d + ")",
+        getUnit: dist => {
+            return {
+                TITLE: "Best Effort (" + dist + ")",
                 SYMBOL: "Seconds",
                 DISPLAY: Time.stringify,
-                GENERATE: run => run.best_efforts?.find(e.name == d)?.elapsed_time,
+                GENERATE: run => run.best_efforts?.find(e => e.name == dist)?.elapsed_time,
             };
-
-            return d;
         },
-        className: "hideBestEffort",
+        title: "Distance",
+        optionNames: bestEffortDistances,
+        optionValues: equivDistances,
+        defaultValue: "400m",
     },
     equivalent_times: {
-        add: params => {
-            let d = params.equivDist;
-            units["equivalent_times_" + d] = {
-                TITLE: "Equivalent Race Time: (" + d + ")",
+        getUnit: dist => {
+            return {
+                TITLE: "Equiv. Race Time: (" + dist + ")",
                 SYMBOL: "Seconds",
                 DISPLAY: Time.stringify,
-                GENERATE: run => run.race_analysis?.equivalent_times?.[d],
+                GENERATE: run => run.race_analysis?.equivalent_times?.[dist],
             };
-
-            return d;
         },
-        className: "hideEquivalentDistances",
+        title: "Distance",
+        optionNames: equivDistances,
+        optionValues: equivDistances,
+        defaultValue: "1 mile",
     },
     flat_equivalent: {
-        add: params => {
-            let d = params.equivDist;
-            units["flat_equivalent_" + d] = {
-                TITLE: "Equivalent Race Time (Flat): (" + d + ")",
+        getUnit: dist => {
+            return {
+                TITLE: "Equiv. Race Time (Flat): (" + dist + ")",
                 SYMBOL: "Seconds",
                 DISPLAY: Time.stringify,
-                GENERATE: run => run.race_analysis?.flat_equivalent?.[d],
+                GENERATE: run => run.race_analysis?.flat_equivalent?.[dist],
             };
-
-            return d;
         },
-        className: "hideEquivalentDistances",
+        title: "Distance",
+        optionNames: equivDistances,
+        optionValues: equivDistances,
+        defaultValue: "1 mile",
     },
     temp_equivalent: {
-        add: params => {
-            let d = params.equivDist;
-            units["temp_equivalent_" + d] = {
-                TITLE: "Equivalent Race Time (at 60℉): (" + d + ")",
+        getUnit: dist => {
+            return {
+                TITLE: "Equiv. Race Time (60℉): (" + dist + ")",
                 SYMBOL: "Seconds",
                 DISPLAY: Time.stringify,
-                GENERATE: run => run.race_analysis?.temp_equivalent?.[d] ?? run.race_analysis?.equivalent_times?.[d],
+                GENERATE: run => run.race_analysis?.temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
             };
-
-            return d;
         },
-        className: "hideEquivalentDistances",
+        title: "Distance",
+        optionNames: equivDistances,
+        optionValues: equivDistances,
+        defaultValue: "1 mile",
     },
     flat_temp_equivalent: {
-        add: params => {
-            let d = params.equivDist;
-            units["flat_temp_equivalent_" + d] = {
-                TITLE: "Equivalent Race Time (Flat and at 60℉): (" + d + ")",
+        getUnit: dist => {
+            return {
+                TITLE: "Equiv. Race Time (Flat/60℉): (" + dist + ")",
                 SYMBOL: "Seconds",
                 DISPLAY: Time.stringify,
-                GENERATE: run => run.race_analysis?.flat_temp_equivalent?.[d] ?? run.race_analysis?.equivalent_times?.[d],
+                GENERATE: run => run.race_analysis?.flat_temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
             };
-
-            return d;
         },
-        className: "hideEquivalentDistances",
+
+        title: "Distance",
+        optionNames: equivDistances,
+        optionValues: equivDistances,
+        defaultValue: "1 mile",
     },
 };

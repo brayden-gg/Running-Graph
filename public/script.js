@@ -4,59 +4,82 @@ const SLOW = new Time("12:00");
 
 let points = [[], [], [], []];
 
-let query = new URLSearchParams(window.location.search);
 let data;
 let graph;
 
 //set defaults for dropdowns/axies
+let form = document.getElementById("form");
 
-let xAxis = query.get("x") || "date";
-let yAxis = query.get("y") || "pace";
+let filterTextInc = new InputMenuElement({
+    queryParamName: "filterInc",
+    title: "Include",
+    defaultValue: ".",
+});
 
-let enableTrendLine = query.get("trendLine") || "off";
-let bestEffortY = query.get("bestEffortY") || "400m";
-let bestEffortX = query.get("bestEffortX") || "400m";
-let equivDistX = query.get("equivDistX") || "1 mile";
-let equivDistY = query.get("equivDistY") || "1 mile";
-let filterTextInc = query.get("filterInc") || ".";
-let filterTextExc = query.get("filterExc") || "a^";
+form.appendChild(filterTextInc.createElement());
 
-for (let axis of ["x", "y"]) {
-    //add options to both axies
-    for (let opt in units) {
-        let parent = document.getElementById(axis);
+let filterTextExc = new InputMenuElement({
+    queryParamName: "filterExc",
+    title: "Exclude",
+    defaultValue: "a^",
+});
 
-        let child = document.createElement("option");
-        child.setAttribute("value", opt);
-        child.innerText = units[opt].TITLE;
+form.appendChild(filterTextExc.createElement());
 
-        parent.appendChild(child);
-    }
+let xAxis = new DropdownMenuElement({
+    queryParamName: "x",
+    title: "X-Axis",
+    optionNames: Object.values(units).map(e => e.TITLE),
+    optionValues: Object.keys(units),
+    defaultValue: "date",
+});
+
+form.appendChild(xAxis.createElement());
+
+if (modularAxes[xAxis.value]) {
+    let xDropdown = new DropdownMenuElement({
+        queryParamName: "xDropdown",
+        ...modularAxes[xAxis.value],
+    });
+    form.appendChild(xDropdown.createElement());
+    let distance = xDropdown.value;
+    let newAxis = xAxis.value + "_" + distance;
+    units[newAxis] = modularAxes[xAxis.value].getUnit(distance);
+    xAxis.value = newAxis;
 }
 
-document.getElementById("x").value = xAxis;
-document.getElementById("y").value = yAxis;
-document.getElementById("bestEffortX").value = bestEffortX;
-document.getElementById("bestEffortY").value = bestEffortY;
-document.getElementById("equivDistX").value = equivDistX;
-document.getElementById("equivDistY").value = equivDistY;
-document.getElementById("filterBoxInc").value = filterTextInc == "." ? "" : filterTextInc;
-document.getElementById("filterBoxExc").value = filterTextExc == "a^" ? "" : filterTextExc;
+let yAxis = new DropdownMenuElement({
+    queryParamName: "y",
+    title: "Y-Axis",
+    optionNames: Object.values(units).map(e => e.TITLE),
+    optionValues: Object.keys(units),
+    defaultValue: "pace",
+});
 
-document.getElementById("trendLine").checked = enableTrendLine == "on";
+form.appendChild(yAxis.createElement());
 
-if (modularAxes[xAxis]) {
-    document.getElementById(modularAxes[xAxis].className + "X").className = "";
-    xAxis += "_" + modularAxes[xAxis].add({ bestEffort: bestEffortX, equivDist: equivDistY });
+if (modularAxes[yAxis.value]) {
+    let yDropdown = new DropdownMenuElement({
+        queryParamName: "yDropdown",
+        ...modularAxes[yAxis.value],
+    });
+    form.appendChild(yDropdown.createElement());
+    let distance = yDropdown.value;
+    let newAxis = yAxis.value + "_" + distance;
+    units[newAxis] = modularAxes[yAxis.value].getUnit(distance);
+    yAxis.value = newAxis;
 }
 
-if (modularAxes[yAxis]) {
-    document.getElementById(modularAxes[yAxis].className + "Y").className = "";
-    yAxis += "_" + modularAxes[yAxis].add({ bestEffort: bestEffortY, equivDist: equivDistY });
-}
+let enableTrendLine = new CheckboxMenuElement({
+    queryParamName: "trendLine",
+    title: "Enable Trend Lines",
+    defaultValue: "off",
+});
 
-let xLabel = `${units[xAxis].TITLE} (${units[xAxis].SYMBOL})`;
-let yLabel = `${units[yAxis].TITLE} (${units[yAxis].SYMBOL})`;
+form.appendChild(enableTrendLine.createElement());
+
+let xLabel = `${units[xAxis.value].TITLE} (${units[xAxis.value].SYMBOL})`;
+let yLabel = `${units[yAxis.value].TITLE} (${units[yAxis.value].SYMBOL})`;
 
 (async () => {
     let configReq = await fetch("/config");
@@ -139,10 +162,10 @@ let yLabel = `${units[yAxis].TITLE} (${units[yAxis].SYMBOL})`;
 })();
 
 function makeChart(data) {
-    let stravaData = data.strava.filter(e => (e.name ? e.name.match(new RegExp(filterTextInc, "i")) != null && e.name.match(new RegExp(filterTextExc, "i")) == null : false));
-    let weatherData = data.weather.filter((e, i) => (data.strava[i].name ? data.strava[i].name.match(new RegExp(filterTextInc, "i")) != null && data.strava[i].name.match(new RegExp(filterTextExc, "i")) == null : false));
+    let stravaData = data.strava.filter(e => (e.name ? e.name.match(new RegExp(filterTextInc.value, "i")) != null && e.name.match(new RegExp(filterTextExc.value, "i")) == null : false));
+    let weatherData = data.weather.filter((e, i) => (data.strava[i].name ? data.strava[i].name.match(new RegExp(filterTextInc.value, "i")) != null && data.strava[i].name.match(new RegExp(filterTextExc.value, "i")) == null : false));
 
-    console.log(xAxis, yAxis);
+    console.log(xAxis.value, yAxis.value);
 
     let labels = [];
 
@@ -150,8 +173,8 @@ function makeChart(data) {
         const run = stravaData[i];
         const weather = weatherData[i];
 
-        let xs = units[xAxis].GENERATE(run, weather);
-        let ys = units[yAxis].GENERATE(run, weather);
+        let xs = units[xAxis.value].GENERATE(run, weather);
+        let ys = units[yAxis.value].GENERATE(run, weather);
 
         let category = +run.workout_type;
 
@@ -182,7 +205,7 @@ function makeChart(data) {
                     pointRadius: 3,
                     pointHoverRadius: 7,
                     trendlineLinear:
-                        enableTrendLine == "on" && points[0].length > 1
+                        enableTrendLine.value == "on" && points[0].length > 1
                             ? {
                                   style: "rgba(28, 200, 28, 0.5)",
                                   lineStyle: "solid",
@@ -193,11 +216,11 @@ function makeChart(data) {
                 {
                     label: "Race",
                     data: points[1],
-                    backgroundColor: units[yAxis].COLOR || "rgba(255, 28, 28, 0.6)",
+                    backgroundColor: units[yAxis.value].COLOR || "rgba(255, 28, 28, 0.6)",
                     pointRadius: 8,
                     pointHoverRadius: 7,
                     trendlineLinear:
-                        enableTrendLine == "on" && points[1].length > 1
+                        enableTrendLine.value == "on" && points[1].length > 1
                             ? {
                                   style: "rgba(255, 28, 28, 0.6)",
                                   lineStyle: "solid",
@@ -212,7 +235,7 @@ function makeChart(data) {
                     pointRadius: 5,
                     pointHoverRadius: 7,
                     trendlineLinear:
-                        enableTrendLine == "on" && points[2].length > 1
+                        enableTrendLine.value == "on" && points[2].length > 1
                             ? {
                                   style: "rgba(28, 28, 200, 0.45)",
                                   lineStyle: "solid",
@@ -227,7 +250,7 @@ function makeChart(data) {
                     pointRadius: 6,
                     pointHoverRadius: 7,
                     trendlineLinear:
-                        enableTrendLine == "on" && points[3].length > 1
+                        enableTrendLine.value == "on" && points[3].length > 1
                             ? {
                                   style: "rgba(200, 0, 200, 0.6)",
                                   lineStyle: "solid",
@@ -243,10 +266,10 @@ function makeChart(data) {
                 callbacks: {
                     label: (tooltipItem, data) => {
                         let run = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].run;
-                        let xLabel = units[xAxis].DISPLAY(tooltipItem.xLabel);
-                        let yLabel = units[yAxis].DISPLAY(tooltipItem.yLabel);
+                        let xLabel = units[xAxis.value].DISPLAY(tooltipItem.xLabel);
+                        let yLabel = units[yAxis.value].DISPLAY(tooltipItem.yLabel);
 
-                        if (yAxis == "race_split_times") {
+                        if (yAxis.value == "race_split_times") {
                             let sameRun = data.datasets[tooltipItem.datasetIndex].data.filter(e => e.run.id == run.id && e.y < tooltipItem.yLabel);
                             if (sameRun.length) {
                                 let lastSplit = tooltipItem.yLabel - sameRun.reduce((p, c) => (c.y > p ? c.y : p), 0);
@@ -268,7 +291,7 @@ function makeChart(data) {
                             labelString: xLabel,
                         },
                         ticks: {
-                            callback: val => units[xAxis].DISPLAY(val),
+                            callback: val => units[xAxis.value].DISPLAY(val),
                             maxRotation: 0,
                             minRotation: 0,
                             autoskip: true,
@@ -283,14 +306,14 @@ function makeChart(data) {
                             labelString: yLabel,
                         },
                         ticks: {
-                            callback: val => units[yAxis].DISPLAY(val),
+                            callback: val => units[yAxis.value].DISPLAY(val),
                         },
                     },
                 ],
             },
             title: {
                 display: true,
-                text: `Visualizing Running Data: ${units[xAxis].TITLE} vs. ${units[yAxis].TITLE}`,
+                text: `Visualizing Running Data: ${units[xAxis.value].TITLE} vs. ${units[yAxis.value].TITLE}`,
                 fontSize: 60,
             },
             responsive: false,

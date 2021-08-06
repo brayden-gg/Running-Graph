@@ -1,154 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+        <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.7"></script>
 
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.7"></script>
+        <title>Strava Visualizer</title>
+        <style>
+            #widget {
+                float: left;
+                margin-top: 130px;
+                background-color: #fff;
+                width: 400px;
+                height: 600px;
+                border: 1px solid #000;
+                border-radius: 10px;
+                padding: 0px;
+                padding-top: 0px;
+                font-family: "Helvetica Neue";
+                transition-duration: 1s;
+            }
 
-    <title>Strava Visualizer</title>
-    <style>
-        #widget {
-            float: left;
-            margin-top: 130px;
-            background-color: #fff;
-            width: 400px;
-            height: 600px;
-            border: 1px solid #000;
-            border-radius: 10px;
-            padding: 0px;
-            padding-top: 0px;
-            font-family: "Helvetica Neue";
-            transition-duration: 1s;
-        }
+            .run {
+                font-family: "Helvetica Neue";
+            }
 
-        .run {
-            font-family: "Helvetica Neue";
-        }
+            .title {
+                font-size: 24px;
+                margin-top: 18px;
+                text-align: center;
+            }
 
-        .title {
-            font-size: 24px;
-            margin-top: 18px;
-            text-align: center;
-        }
+            .split {
+                font-size: 12px;
+                margin: 2px;
+            }
 
-        .split {
-            font-size: 12px;
-            margin: 2px;
-        }
+            .stat {
+                font-size: 40px;
+                margin-bottom: 0px;
+                margin-top: 10px;
+            }
 
-        .stat {
-            font-size: 40px;
-            margin-bottom: 0px;
-            margin-top: 10px;
-        }
-
-        .hide {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div style="width: 100%; font-family: 'Helvetica Neue'; height: 20px;">
-
-        <form id="form">
-
-            <p style="float: left; margin: 0px;">&nbsp;Include: &nbsp;</p>
-            <input type="text" name="filterInc" id="filterBoxInc" onchange="this.form.submit()" style="float: left; margin-right: 10px;"></input>
-            <p style="float: left; margin: 0px;">&nbsp;Exclude: &nbsp;</p>
-
-            <input type="text" name="filterExc" id="filterBoxExc" onchange="this.form.submit()" style="float: left; margin-right: 10px;"></input>
-
-            <p style="float: left; margin: 0px;">&nbsp;X Axis: &nbsp;</p>
-            <select name="x" id="x" onchange="this.form.submit()" style="float: left; margin: 0px;"></select>
-            <div class="hide" id="hideBestEffortX" style="float: left; margin: 0px;">
-                <p style="float: left; margin: 0px;">&emsp;Distance: &nbsp;</p>
-                <select name="bestEffortX" id="bestEffortX" onchange="this.form.submit()" style="float: left; margin: 0px;">
-                    <option value="400m">400m</option>
-                    <option value="1/2 mile">1/2 mile</option>
-                    <option value="1k">1k</option>
-                    <option value="1 mile">1 mile</option>
-                    <option value="2 mile">2 mile</option>
-                    <option value="5k">5k</option>
-                    <option value="10k">10k</option>
-                    <option value="15k">15k</option>
-                    <option value="10 mile">10 mile</option>
-                    <option value="20k">20k</option>
-                    <option value="half marathon">half marathon</option>
-                    <option value="30k">30k</option>
-                    <option value="marathon">marathon</option>
-                    <option value="50k">50k</option>
-                </select>
-            </div>
-            <div class="hide" id="hideEquivalentDistancesX" style="float: left; margin: 0px;">
-                <p style="float: left; margin: 0px;">&emsp;Distance: &nbsp;</p>
-                <select name="equivDistX" id="equivDistX" onchange="this.form.submit()" style="float: left; margin: 0px;">
-                    <option value="1500 m">1500 m</option>
-                    <option value="1 mile">1 mile</option>
-                    <option value="3000 m">3000 m</option>
-                    <option value="2 miles">2 miles</option>
-                    <option value="5K">5K</option>
-                </select>
-            </div>
-            <p style="float: left; margin: 0px;">&emsp;Y Axis: &nbsp;</p>
-            <select name="y" id="y" onchange="this.form.submit()" style="float: left; margin: 0px;"></select>
-            <div class="hide" id="hideBestEffortY" style="float: left; margin: 0px;">
-                <p style="float: left; margin: 0px;">&emsp;Distance: &nbsp;</p>
-                <select name="bestEffortY" id="bestEffortY" onchange="this.form.submit()" style="float: left; margin: 0px;">
-                    <option value="400m">400m</option>
-                    <option value="1/2 mile">1/2 mile</option>
-                    <option value="1k">1k</option>
-                    <option value="1 mile">1 mile</option>
-                    <option value="2 mile">2 mile</option>
-                    <option value="5k">5k</option>
-                    <option value="10k">10k</option>
-                    <option value="15k">15k</option>
-                    <option value="10 mile">10 mile</option>
-                    <option value="20k">20k</option>
-                    <option value="half marathon">half marathon</option>
-                    <option value="30k">30k</option>
-                    <option value="marathon">marathon</option>
-                    <option value="50k">50k</option>
-                </select>
-            </div>
-            <div class="hide" id="hideEquivalentDistancesY" style="float: left; margin: 0px;">
-                <p style="float: left; margin: 0px;">&emsp;Distance: &nbsp;</p>
-                <select name="equivDistY" id="equivDistY" onchange="this.form.submit()" style="float: left; margin: 0px;">
-                    <option value="1500 m">1500 m</option>
-                    <option value="1 mile">1 mile</option>
-                    <option value="3000 m">3000 m</option>
-                    <option value="2 miles">2 miles</option>
-                    <option value="5K">5K</option>
-                </select>
-            </div>
-            <p style="float: left; margin: 0px;">&emsp;Enable Trend Lines: &nbsp;</p>
-            <input type="checkbox" id="trendLine" name="trendLine" style="float: left; margin: 0px; margin-top: 5px" onchange="this.form.submit()">
-        </form>
-    </div>
-    <br />
-    <div style="width: 1500; border-right: 300px">
-        <canvas id="graph" width="800" height="800" style="float: left"></canvas>
-        <div id="widget">
-            <p class="run title">Select a Run to view</p>
-            <div style="background-color: #DDD; height: 220px; margin: 10px"></div>
-            <div style="float: left; width: 120px; height: 80px; margin-top: 5px; margin-left: 10px; background-color: #E0E0E0;"></div>
-            <div style="float: left; width: 120px; height: 80px; margin-top: 5px; margin-left: 10px; background-color: #E5E5E5;"></div>
-            <div style="float: left; width: 120px; height: 80px; margin-top: 5px; margin-left: 10px; background-color: #EAEAEA;"></div>
-            <div style="float: left; width: 180px; height: 180px; margin-top: 10px; margin-left: 10px; background-color: #F0F0F0"></div>
-            <div style="float: left; width: 180px; height: 180px; margin-top: 10px; margin-left: 20px; background-color: #F5F5F5"></div>
+            .hide {
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div style="width: 100%; font-family: 'Helvetica Neue'; height: 20px">
+            <form id="form"></form>
         </div>
-    </div>
+        <br />
+        <div style="width: 1500; border-right: 300px">
+            <canvas id="graph" width="800" height="800" style="float: left"></canvas>
+            <div id="widget">
+                <p class="run title">Select a Run to view</p>
+                <div style="background-color: #ddd; height: 220px; margin: 10px"></div>
+                <div style="float: left; width: 120px; height: 80px; margin-top: 5px; margin-left: 10px; background-color: #e0e0e0"></div>
+                <div style="float: left; width: 120px; height: 80px; margin-top: 5px; margin-left: 10px; background-color: #e5e5e5"></div>
+                <div style="float: left; width: 120px; height: 80px; margin-top: 5px; margin-left: 10px; background-color: #eaeaea"></div>
+                <div style="float: left; width: 180px; height: 180px; margin-top: 10px; margin-left: 10px; background-color: #f0f0f0"></div>
+                <div style="float: left; width: 180px; height: 180px; margin-top: 10px; margin-left: 20px; background-color: #f5f5f5"></div>
+            </div>
+        </div>
 
-    <button><a href="https://darksky.net/poweredby/">Powered by Dark Sky</a></button>
-    <button onclick="if(confirm('Quit Session?')){fetch('/quit').then(e=>document.write('Session ended. You may now close this window.'))}">Quit</button>
-    <script src="time.js"></script>
-    <script src="trendline.js"></script>
+        <button><a href="https://darksky.net/poweredby/">Powered by Dark Sky</a></button>
+        <button onclick="if(confirm('Quit Session?')){fetch('/quit').then(e=>document.write('Session ended. You may now close this window.'))}">Quit</button>
+        <script src="time.js"></script>
+        <script src="trendline.js"></script>
 
-    <script src="commonEvents.js"></script>
-    <script src="units.js"></script>
-    <script src="script.js"></script>
-</body>
+        <script src="commonEvents.js"></script>
+        <script src="units.js"></script>
+        <script src="MenuElement.js"></script>
+        <script src="script.js"></script>
+    </body>
 </html>

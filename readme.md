@@ -5,7 +5,7 @@
 ### Feature Ideas:
 
 -   [x] Improve file structure
--   [ ] Make dropdown menus more modular/OO
+-   [x] Make dropdown menus more modular/OO
 -   [ ] Add support for other activity types
 -   [ ] Replace massive JSON file with an actual database
 -   [ ] Add an actual readme file with pictures, descriptions etc.
