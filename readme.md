@@ -2,7 +2,7 @@
 
 ### Uses the Strava and Darksky APIs to plot various metrics
 
-![Example Graph](./Preview.png)
+![Example Graph](./Resources/Preview.png)
 
 ### Feature Ideas:
 
