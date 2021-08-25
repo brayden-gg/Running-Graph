@@ -93,19 +93,13 @@ app.get("/update", async (request, response) => {
         const stravaResp = await fetch(`https://www.strava.com/api/v3/activities/${ids[i]}?access_token=${config.generated_token}`);
         const stravaJson = await stravaResp.json();
         if (WEATHER_DATA.length < STRAVA_DATA.length + 1) {
-            if (stravaJson.type == "Run") {
-                if (stravaJson.start_latlng) {
-                    const weatherResp = await fetch(`https://api.darksky.net/forecast/${process.env.WEATHER_KEY}/${stravaJson.start_latlng[0]},${stravaJson.start_latlng[1]},${new Date(stravaJson.start_date).valueOf() / 1000}`);
-                    const weatherJson = await weatherResp.json();
-                    WEATHER_DATA.unshift(weatherJson.currently);
-                } else {
-                    WEATHER_DATA.unshift({
-                        error: "No location data",
-                    });
-                }
+            if (stravaJson.start_latlng) {
+                const weatherResp = await fetch(`https://api.darksky.net/forecast/${process.env.WEATHER_KEY}/${stravaJson.start_latlng[0]},${stravaJson.start_latlng[1]},${new Date(stravaJson.start_date).valueOf() / 1000}`);
+                const weatherJson = await weatherResp.json();
+                WEATHER_DATA.unshift(weatherJson.currently);
             } else {
                 WEATHER_DATA.unshift({
-                    error: "Wrong activity type",
+                    error: "No location data",
                 });
             }
         }
@@ -202,19 +196,14 @@ app.get("/reloadAtIndex/:index/:runId", async (request, response) => {
     const stravaJson = await stravaResp.json();
 
     let weatherReplace;
-    if (stravaJson.type == "Run") {
-        if (stravaJson.start_latlng) {
-            const weatherResp = await fetch(`https://api.darksky.net/forecast/${process.env.WEATHER_KEY}/${stravaJson.start_latlng[0]},${stravaJson.start_latlng[1]},${new Date(stravaJson.start_date).valueOf() / 1000}`);
-            const weatherJson = await weatherResp.json();
-            weatherReplace = weatherJson.error ? weatherJson : weatherJson.currently;
-        } else {
-            weatherReplace = {
-                error: "No location data",
-            };
-        }
+
+    if (stravaJson.start_latlng) {
+        const weatherResp = await fetch(`https://api.darksky.net/forecast/${process.env.WEATHER_KEY}/${stravaJson.start_latlng[0]},${stravaJson.start_latlng[1]},${new Date(stravaJson.start_date).valueOf() / 1000}`);
+        const weatherJson = await weatherResp.json();
+        weatherReplace = weatherJson.error ? weatherJson : weatherJson.currently;
     } else {
         weatherReplace = {
-            error: "Wrong activity type",
+            error: "No location data",
         };
     }
 

@@ -93,4 +93,5 @@ class Time {
         this.value -= Time.parse(other);
         return this;
     }
-}
+} 
+

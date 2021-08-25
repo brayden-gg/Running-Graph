@@ -2,13 +2,23 @@ document.getElementById("graph").width = window.outerWidth - 500;
 
 const SLOW = new Time("12:00");
 
-let points = [[], [], [], []];
+let points = [];
 
 let data;
 let graph;
 
-//set defaults for dropdowns/axies
+//create dropdowns
 let form = document.getElementById("form");
+
+let activityType = new DropdownMenuElement({
+    queryParamName: "activityType",
+    title: "Activity Type",
+    optionNames: ["Run", "Ride", "Workout", "Weight Training", "Handcycle", "Alpine Ski", "Rowing", "Walk"],
+    optionValues: ["Run", "Ride", "Workout", "WeightTraining", "Handcycle", "AlpineSki", "Rowing", "Walk"],
+    defaultValue: "Run",
+});
+
+form.appendChild(activityType.createElement());
 
 let filterTextInc = new InputMenuElement({
     queryParamName: "filterInc",
@@ -29,7 +39,7 @@ form.appendChild(filterTextExc.createElement());
 let xAxis = new DropdownMenuElement({
     queryParamName: "x",
     title: "X-Axis",
-    optionNames: Object.values(units).map(e => e.TITLE),
+    optionNames: Object.values(units).map(e => e.title),
     optionValues: Object.keys(units),
     defaultValue: "date",
 });
@@ -51,7 +61,7 @@ if (modularAxes[xAxis.value]) {
 let yAxis = new DropdownMenuElement({
     queryParamName: "y",
     title: "Y-Axis",
-    optionNames: Object.values(units).map(e => e.TITLE),
+    optionNames: Object.values(units).map(e => e.title),
     optionValues: Object.keys(units),
     defaultValue: "pace",
 });
@@ -78,8 +88,8 @@ let enableTrendLine = new CheckboxMenuElement({
 
 form.appendChild(enableTrendLine.createElement());
 
-let xLabel = `${units[xAxis.value].TITLE} (${units[xAxis.value].SYMBOL})`;
-let yLabel = `${units[yAxis.value].TITLE} (${units[yAxis.value].SYMBOL})`;
+let xLabel = `${units[xAxis.value].title} (${units[xAxis.value].symbol})`;
+let yLabel = `${units[yAxis.value].title} (${units[yAxis.value].symbol})`;
 
 (async () => {
     let configReq = await fetch("/config");
@@ -173,17 +183,20 @@ function makeChart(data) {
         const run = stravaData[i];
         const weather = weatherData[i];
 
-        let xs = units[xAxis.value].GENERATE(run, weather);
-        let ys = units[yAxis.value].GENERATE(run, weather);
+        let xs = units[xAxis.value].generate(run, weather);
+        let ys = units[yAxis.value].generate(run, weather);
 
-        let category = +run.workout_type;
+        let category = run.workout_type || 10;
 
         xs = xs instanceof Array ? xs : [xs];
         ys = ys instanceof Array ? ys : [ys];
 
         for (let x of xs) {
             for (let y of ys) {
-                if (x !== undefined && y !== undefined && run.type == "Run") {
+                if (x !== undefined && y !== undefined && run.type == activityType.value) {
+                    if (!points[category]) {
+                        points[category] = [];
+                    }
                     points[category].push({ x, y, run, weather });
                     labels.push(run.name);
                 }
@@ -192,73 +205,75 @@ function makeChart(data) {
     }
 
     let ctx = document.getElementById("graph").getContext("2d");
+
+    let workoutTypes = [
+        {
+            name: activityType.value,
+            color: "rgba(28, 200, 28, 0.4)",
+            radius: activityType.value == "Run" ? 3 : 6,
+            typeNumber: 10,
+        },
+        {
+            name: "Long Run",
+            color: "rgba(28, 28, 200, 0.45)",
+            radius: 5,
+            typeNumber: 2,
+        },
+        {
+            name: "Workout",
+            color: "rgba(200, 0, 200, 0.6)",
+            radius: 6,
+            typeNumber: 3,
+        },
+        {
+            name: "Race",
+            color: "rgba(255, 28, 28, 0.6)",
+            radius: 8,
+            typeNumber: 1,
+        },
+
+        // {
+        //     name: "Also Ride?",
+        //     color: "rgba(191, 239, 255, 0.6)", //"rgba(28, 200, 28, 0.4)", //
+        //     radius: 5,
+        //     typeNumber: 10,
+        // },
+        {
+            name: "Workout",
+            color: "rgba(200, 0, 200, 0.6)",
+            radius: 7,
+            typeNumber: 12,
+        },
+    ];
+
+    let datasets = [];
+
+    for (let type of workoutTypes) {
+        if (points[type.typeNumber]) {
+            datasets.push({
+                label: type.name,
+                data: points[type.typeNumber],
+                backgroundColor: type.color,
+                pointRadius: type.radius,
+                pointHoverRadius: 7,
+                trendlineLinear:
+                    enableTrendLine.value == "on" && points[type.typeNumber].length > 1
+                        ? {
+                              style: type.color,
+                              lineStyle: "solid",
+                              width: 4,
+                          }
+                        : undefined,
+            });
+        }
+    }
+
     graph = new Chart(ctx, {
         type: "scatter",
 
         data: {
             labels: labels,
-            datasets: [
-                {
-                    label: "Run",
-                    data: points[0],
-                    backgroundColor: "rgba(28, 200, 28, 0.4)",
-                    pointRadius: 3,
-                    pointHoverRadius: 7,
-                    trendlineLinear:
-                        enableTrendLine.value == "on" && points[0].length > 1
-                            ? {
-                                  style: "rgba(28, 200, 28, 0.5)",
-                                  lineStyle: "solid",
-                                  width: 4,
-                              }
-                            : undefined,
-                },
-                {
-                    label: "Race",
-                    data: points[1],
-                    backgroundColor: units[yAxis.value].COLOR || "rgba(255, 28, 28, 0.6)",
-                    pointRadius: 8,
-                    pointHoverRadius: 7,
-                    trendlineLinear:
-                        enableTrendLine.value == "on" && points[1].length > 1
-                            ? {
-                                  style: "rgba(255, 28, 28, 0.6)",
-                                  lineStyle: "solid",
-                                  width: 4,
-                              }
-                            : undefined,
-                },
-                {
-                    label: "Long Run",
-                    data: points[2],
-                    backgroundColor: "rgba(28, 28, 200, 0.45)",
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    trendlineLinear:
-                        enableTrendLine.value == "on" && points[2].length > 1
-                            ? {
-                                  style: "rgba(28, 28, 200, 0.45)",
-                                  lineStyle: "solid",
-                                  width: 4,
-                              }
-                            : undefined,
-                },
-                {
-                    label: "Workout",
-                    data: points[3],
-                    backgroundColor: "rgba(200, 0, 200, 0.6)",
-                    pointRadius: 6,
-                    pointHoverRadius: 7,
-                    trendlineLinear:
-                        enableTrendLine.value == "on" && points[3].length > 1
-                            ? {
-                                  style: "rgba(200, 0, 200, 0.6)",
-                                  lineStyle: "solid",
-                                  width: 4,
-                              }
-                            : undefined,
-                },
-            ],
+            datasets,
         },
         options: {
             tooltips: {
@@ -266,8 +281,8 @@ function makeChart(data) {
                 callbacks: {
                     label: (tooltipItem, data) => {
                         let run = data.datasets[tooltipItem.datasetIndex].data[tooltipItem.index].run;
-                        let xLabel = units[xAxis.value].DISPLAY(tooltipItem.xLabel);
-                        let yLabel = units[yAxis.value].DISPLAY(tooltipItem.yLabel);
+                        let xLabel = units[xAxis.value].display(tooltipItem.xLabel);
+                        let yLabel = units[yAxis.value].display(tooltipItem.yLabel);
 
                         if (yAxis.value == "race_split_times") {
                             let sameRun = data.datasets[tooltipItem.datasetIndex].data.filter(e => e.run.id == run.id && e.y < tooltipItem.yLabel);
@@ -291,7 +306,7 @@ function makeChart(data) {
                             labelString: xLabel,
                         },
                         ticks: {
-                            callback: val => units[xAxis.value].DISPLAY(val),
+                            callback: val => units[xAxis.value].display(val),
                             maxRotation: 0,
                             minRotation: 0,
                             autoskip: true,
@@ -306,14 +321,14 @@ function makeChart(data) {
                             labelString: yLabel,
                         },
                         ticks: {
-                            callback: val => units[yAxis.value].DISPLAY(val),
+                            callback: val => units[yAxis.value].display(val),
                         },
                     },
                 ],
             },
             title: {
                 display: true,
-                text: `Visualizing Running Data: ${units[xAxis.value].TITLE} vs. ${units[yAxis.value].TITLE}`,
+                text: `Visualizing ${activityType.value} Data: ${units[xAxis.value].title} vs. ${units[yAxis.value].title}`,
                 fontSize: 60,
             },
             responsive: false,
@@ -376,8 +391,8 @@ function makeChart(data) {
                     let pace = calcPace(s.distance, s.moving_time);
                     if (value.weather.error || i < 5 || i > show.length - 6 || show.length < 11) {
                         splits_tag += `<p class = "run split"> ${value.run.workout_type != 3 && value.run.workout_type != 1 ? "Lap " + (i + 1) + " - " : ""}
-                                    ${(s.distance / 1609.34).toFixed(1)} Mi - ${value.run.workout_type == 3 || value.run.workout_type == 1 ? " Time: " + units.elapsed_time.DISPLAY(s.elapsed_time, 1) + " - " : ""}
-                                    ${pace.toString()} Min/Mi</p>`;
+                                    ${(s.distance / 1609.34).toFixed(1)} Mi - ${value.run.workout_type == 3 || value.run.workout_type == 1 ? " Time: " + units.elapsed_time.display(s.elapsed_time, 1) + " - " : ""}
+                                    ${pace.toString()} min/mi</p>`;
                     } else if (!dots) {
                         splits_tag += `<p class = "run split"> ... </p>`;
                         dots = true;
@@ -471,7 +486,7 @@ function makeChart(data) {
                     distance: predictDistance(value.run),
                 };
 
-                document.getElementById("predicted-distance-time").innerText = run.distance + "m: " + units.elapsed_time.DISPLAY(run.elapsed_time, 2);
+                document.getElementById("predicted-distance-time").innerText = run.distance + "m: " + units.elapsed_time.display(run.elapsed_time, 2);
 
                 setEquivalentTimes(run, "equivalent_times");
 
@@ -480,8 +495,8 @@ function makeChart(data) {
                 let hillInput = document.getElementById("hills");
                 let adjustedHills = await getAdjustedHillsTime(run, hillInput.value);
 
-                flatPara.innerText = units.elapsed_time.DISPLAY(adjustedHills.toFlat, 1);
-                hillyPara.innerText = units.elapsed_time.DISPLAY(adjustedHills.toHilly, 1);
+                flatPara.innerText = units.elapsed_time.display(adjustedHills.toFlat, 1);
+                hillyPara.innerText = units.elapsed_time.display(adjustedHills.toHilly, 1);
 
                 let defaultEqButton = document.getElementById("defaultEqButton");
                 let flatEqButton = document.getElementById("flatEqButton");
@@ -545,7 +560,7 @@ async function getEquivalentTimes(run) {
 
     let parser = new DOMParser();
 
-    const res = await fetch(`/runCalc/distance=${units.distance.GENERATE(run)}&time=0:${run.elapsed_time}&mode=eqperformance`);
+    const res = await fetch(`/runCalc/distance=${units.distance.generate(run)}&time=0:${run.elapsed_time}&mode=eqperformance`);
     const txt = await res.text();
 
     let html = parser.parseFromString(txt, "text/html");
@@ -562,7 +577,7 @@ async function getEquivalentTimes(run) {
 async function getAdjustedHillsTime(run, hypclimb) {
     let parser = new DOMParser();
 
-    const res = await fetch(`/runCalc/mode=climbpace&climbing=${units.total_elevation_gain.GENERATE(run)}&downhill=${units.total_elevation_gain.GENERATE(run)}&distance=${units.distance.GENERATE(run)}&time=0:${run.elapsed_time}&hypclimbing=${hypclimb}&hypdownhill=${hypclimb}`);
+    const res = await fetch(`/runCalc/mode=climbpace&climbing=${units.total_elevation_gain.generate(run)}&downhill=${units.total_elevation_gain.generate(run)}&distance=${units.distance.generate(run)}&time=0:${run.elapsed_time}&hypclimbing=${hypclimb}&hypdownhill=${hypclimb}`);
     const txt = await res.text();
 
     let html = parser.parseFromString(txt, "text/html");
@@ -589,7 +604,7 @@ async function getAdjustedTempTime(run, weather) {
 
     let parser = new DOMParser();
 
-    const res = await fetch(`/runCalc/distance=${units.distance.GENERATE(run)}&time=0:${run.elapsed_time}&mode=to60&temp1=${weather.apparentTemperature}`);
+    const res = await fetch(`/runCalc/distance=${units.distance.generate(run)}&time=0:${run.elapsed_time}&mode=to60&temp1=${weather.apparentTemperature}`);
     const txt = await res.text();
 
     let html = parser.parseFromString(txt, "text/html");
@@ -608,7 +623,7 @@ async function recalculateHills(run) {
     }
 
     let adjustedHills = await getAdjustedHillsTime(run, hillInput.value);
-    hillyPara.innerText = units.elapsed_time.DISPLAY(adjustedHills.toHilly, 1);
+    hillyPara.innerText = units.elapsed_time.display(adjustedHills.toHilly, 1);
 
     let hillyRun = await getEquivalentTimes({ distance: run.distance, elapsed_time: adjustedHills.toHilly });
     setEquivalentTimes({ race_analysis: { hills_equivalent: hillyRun } }, "hills_equivalent");
@@ -634,7 +649,7 @@ function setEquivalentTimes(run, mode) {
 
     let eqText = "";
     for (let t in eq) {
-        eqText += `<p class="run split" style="width: 90px; float: left">${t}</p><p class="run split" style="width: 90px; float: left">${units.elapsed_time.DISPLAY(eq[t], 1)}</p>`;
+        eqText += `<p class="run split" style="width: 90px; float: left">${t}</p><p class="run split" style="width: 90px; float: left">${units.elapsed_time.display(eq[t], 1)}</p>`;
     }
 
     eqDiv.innerHTML = eqText;

@@ -1,57 +1,64 @@
 let units = {
     temperature: {
-        TITLE: "Temperature",
-        SYMBOL: "℉`",
-        DISPLAY: val => val.toFixed(1) + " ℉",
-        GENERATE: (_, weather) => weather.temperature,
+        title: "Temperature",
+        symbol: "℉`",
+        display: val => val.toFixed(1) + " ℉",
+        generate: (_, weather) => weather.temperature,
+        supportedActivityTypes: "all",
     },
     apparentTemperature: {
-        TITLE: "Apparent Temperature",
-        SYMBOL: "℉`",
-        DISPLAY: val => val.toFixed(1) + " ℉",
-        GENERATE: (_, weather) => weather.apparentTemperature,
+        title: "Apparent Temperature",
+        symbol: "℉`",
+        display: val => val.toFixed(1) + " ℉",
+        generate: (_, weather) => weather.apparentTemperature,
+        supportedActivityTypes: "all",
     },
     humidity: {
-        TITLE: "Humidity",
-        SYMBOL: "%",
-        DISPLAY: val => (val * 100).toFixed(0) + "%",
-        GENERATE: (_, weather) => weather.humidity,
+        title: "Humidity",
+        symbol: "%",
+        display: val => (val * 100).toFixed(0) + "%",
+        generate: (_, weather) => weather.humidity,
+        supportedActivityTypes: "all",
     },
     date: {
-        TITLE: "Date",
-        SYMBOL: "M/D/YY",
-        DISPLAY: val => {
+        title: "Date",
+        symbol: "M/D/YY",
+        display: val => {
             let d = new Date(val);
             return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear() % 2000}`;
         },
-        GENERATE: run => new Date(run.start_date).valueOf(),
+        generate: run => new Date(run.start_date).valueOf(),
+        supportedActivityTypes: "all",
     },
     date_of_year: {
-        TITLE: "Date of Year",
-        SYMBOL: "M/D",
-        DISPLAY: val => {
+        title: "Date of Year",
+        symbol: "M/D",
+        display: val => {
             let d = new Date(val);
             return `${d.getMonth() + 1}/${d.getDate()}`;
         },
-        GENERATE: run => new Date(run.start_date).setYear(1970),
+        generate: run => new Date(run.start_date).setYear(1970),
+        supportedActivityTypes: "all",
     },
     day_of_week: {
-        TITLE: "Day of Week",
-        SYMBOL: "M/D",
-        DISPLAY: val => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][val],
-        GENERATE: run => (new Date(run.start_date).getDay() == 0 ? 6 : new Date(run.start_date).getDay() - 1),
+        title: "Day of Week",
+        symbol: "M/D",
+        display: val => ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][val],
+        generate: run => (new Date(run.start_date).getDay() == 0 ? 6 : new Date(run.start_date).getDay() - 1),
+        supportedActivityTypes: "all",
     },
     windSpeed: {
-        TITLE: "Wind Speed",
-        SYMBOL: "mph",
-        DISPLAY: val => val + "mph",
-        GENERATE: (_, weather) => weather.windSpeed,
+        title: "Wind Speed",
+        symbol: "mph",
+        display: val => val + "mph",
+        generate: (_, weather) => weather.windSpeed,
+        supportedActivityTypes: "all",
     },
     pace: {
-        TITLE: "Pace",
-        SYMBOL: "min/mi",
-        DISPLAY: Time.stringify,
-        GENERATE: run => {
+        title: "Pace",
+        symbol: "min/mi",
+        display: Time.stringify,
+        generate: run => {
             let total = 0;
             let len = 0;
             if (run.laps && run.workout_type == 3) {
@@ -69,12 +76,13 @@ let units = {
             let pace = calcPace(run.distance, run.moving_time);
             return pace < new Time("30:00") ? pace.valueOf() : undefined;
         },
+        supportedActivityTypes: ["Run", "Ride"],
     },
     average_speed: {
-        TITLE: "Speed",
-        SYMBOL: "m/s",
-        DISPLAY: val => val.toFixed(1),
-        GENERATE: run => {
+        title: "Speed",
+        symbol: "m/s",
+        display: val => val.toFixed(1),
+        generate: run => {
             let meters = 0;
             let seconds = 0;
             if (run.laps && run.workout_type == 3) {
@@ -91,31 +99,35 @@ let units = {
             }
             return run.average_speed;
         },
+        supportedActivityTypes: ["Run", "Ride"],
     },
     distance: {
-        TITLE: "Distance",
-        SYMBOL: "Miles",
-        DISPLAY: val => val.toFixed(1) + " Mi",
-        GENERATE: run => run.distance / 1609.34,
+        title: "Distance",
+        symbol: "Miles",
+        display: val => val.toFixed(1) + " Mi",
+        generate: run => run.distance / 1609.34,
+        supportedActivityTypes: ["Run", "Ride"],
     },
 
     moving_time: {
-        TITLE: "Moving Time",
-        SYMBOL: "Seconds",
-        DISPLAY: Time.stringify,
-        GENERATE: run => run.moving_time,
+        title: "Moving Time",
+        symbol: "Seconds",
+        display: Time.stringify,
+        generate: run => run.moving_time,
+        supportedActivityTypes: "all",
     },
     elapsed_time: {
-        TITLE: "Elapsed Time",
-        SYMBOL: "Seconds",
-        DISPLAY: Time.stringify,
-        GENERATE: run => run.elapsed_time,
+        title: "Elapsed Time",
+        symbol: "Seconds",
+        display: Time.stringify,
+        generate: run => run.elapsed_time,
+        supportedActivityTypes: "all",
     },
     average_cadence: {
-        TITLE: "Cadence",
-        SYMBOL: "SPM",
-        DISPLAY: val => val.toFixed(1) + " SPM",
-        GENERATE: run => {
+        title: "Cadence",
+        symbol: "SPM",
+        display: val => val.toFixed(1) + " SPM",
+        generate: run => {
             let steps = 0;
             let time = 0;
             if (run.laps && run.workout_type == 3) {
@@ -132,84 +144,85 @@ let units = {
             }
             return run.average_cadence * 2;
         },
+        supportedActivityTypes: ["Run"],
     },
     total_elevation_gain: {
-        TITLE: "Elevation Gain",
-        SYMBOL: "ft",
-        DISPLAY: val => val.toFixed(1) + "ft",
-        GENERATE: (run, weather) => run.total_elevation_gain * 3.28083989501,
+        title: "Elevation Gain",
+        symbol: "ft",
+        display: val => val.toFixed(1) + "ft",
+        generate: (run, weather) => run.total_elevation_gain * 3.28083989501,
+        supportedActivityTypes: ["Run", "Ride"],
     },
     perceived_exertion: {
-        TITLE: "Perceived Exertion",
-        SYMBOL: "1-10",
-        DISPLAY: val => val,
-        GENERATE: run => run.perceived_exertion,
+        title: "Perceived Exertion",
+        symbol: "1-10",
+        display: val => val,
+        generate: run => run.perceived_exertion,
     },
     relative_effort: {
-        TITLE: "Relative Effort",
-        SYMBOL: "",
-        DISPLAY: val => val,
-        GENERATE: run => run.suffer_score,
+        title: "Relative Effort",
+        symbol: "",
+        display: val => val,
+        generate: run => run.suffer_score,
     },
     calories: {
-        TITLE: "Calories",
-        SYMBOL: "Cal",
-        DISPLAY: val => val,
-        GENERATE: run => run.calories,
+        title: "Calories",
+        symbol: "Cal",
+        display: val => val,
+        generate: run => run.calories,
     },
     average_heartrate: {
-        TITLE: "Average Heartrate",
-        SYMBOL: "bpm",
-        DISPLAY: val => val,
-        GENERATE: run => run.average_heartrate,
+        title: "Average Heartrate",
+        symbol: "bpm",
+        display: val => val,
+        generate: run => run.average_heartrate,
     },
     best_efforts: {
-        TITLE: "Best Efforts",
-        DROP_DOWN: [""],
+        title: "Best Efforts",
     },
 
     equivalent_times: {
-        TITLE: "Equiv. Race Time",
+        title: "Equiv. Race Time",
     },
 
     flat_equivalent: {
-        TITLE: "Equiv. Race Time (Flat)",
+        title: "Equiv. Race Time (Flat)",
     },
 
     temp_equivalent: {
-        TITLE: "Equiv. Race Time (60℉)",
+        title: "Equiv. Race Time (60℉)",
     },
 
     flat_temp_equivalent: {
-        TITLE: "Equiv. Race Time (Flat/60℉)",
+        title: "Equiv. Race Time (Flat/60℉)",
     },
 
     toFlat: {
-        TITLE: "Race Time (Flat)",
-        SYMBOL: "Seconds",
-        DISPLAY: Time.stringify,
-        GENERATE: run => run?.race_analysis.toFlat,
+        title: "Race Time (Flat)",
+        symbol: "Seconds",
+        display: Time.stringify,
+        generate: run => run?.race_analysis.toFlat,
     },
 
     to60: {
-        TITLE: "Race Time at (60℉)",
-        SYMBOL: "Seconds",
-        DISPLAY: Time.stringify,
-        GENERATE: run => run.race_analysis?.to60,
+        title: "Race Time at (60℉)",
+        symbol: "Seconds",
+        display: Time.stringify,
+        generate: run => run.race_analysis?.to60,
     },
 
     toFlat_and_to60: {
-        TITLE: "Race Time (Flat/60℉)",
-        SYMBOL: "Seconds",
-        DISPLAY: Time.stringify,
-        GENERATE: run => run?.race_analysis.toFlat_and_to60,
+        title: "Race Time (Flat/60℉)",
+        symbol: "Seconds",
+        display: Time.stringify,
+        generate: run => run?.race_analysis.toFlat_and_to60,
     },
 
     race_split_times: {
-        TITLE: "Race Split Times",
-        SYMBOL: "Seconds",
-        DISPLAY: val => Time.stringify(val, 1),
-        GENERATE: run => {
+        title: "Race Split Times",
+        symbol: "Seconds",
+        display: val => Time.stringify(val, 1),
+        generate: run => {
             if (run.workout_type !== 1) {
                 return;
             }
@@ -231,10 +244,10 @@ let units = {
     },
 
     workout_split_times: {
-        TITLE: "Workout Splits",
-        SYMBOL: "Seconds",
-        DISPLAY: Time.stringify,
-        GENERATE: run => {
+        title: "Workout Splits",
+        symbol: "Seconds",
+        display: Time.stringify,
+        generate: run => {
             if (run.workout_type !== 3) {
                 return;
             }
@@ -256,25 +269,25 @@ let units = {
     },
 
     workout_split_paces: {
-        TITLE: "Workout Splits (Pace)",
-        SYMBOL: "min/mi",
-        DISPLAY: Time.stringify,
-        GENERATE: run => (run.workout_type == 3 && run?.laps?.length > 3 ? run.laps.filter(e => calcPace(e.distance, e.elapsed_time) < new Time("8:00")).map(e => calcPace(e.distance, e.elapsed_time)) : undefined),
+        title: "Workout Splits (Pace)",
+        symbol: "min/mi",
+        display: Time.stringify,
+        generate: run => (run.workout_type == 3 && run?.laps?.length > 3 ? run.laps.filter(e => calcPace(e.distance, e.elapsed_time) < new Time("8:00")).map(e => calcPace(e.distance, e.elapsed_time)) : undefined),
     },
 
     workout_split_distances: {
-        TITLE: "Workout Splits (Distance)",
-        SYMBOL: "m",
-        DISPLAY: val => val + "m",
-        GENERATE: run => (run.workout_type == 3 && run?.laps?.length > 3 ? run.laps.filter(e => calcPace(e.distance, e.elapsed_time) < new Time("8:00")).map(e => e.distance) : undefined),
+        title: "Workout Splits (Distance)",
+        symbol: "m",
+        display: val => val + "m",
+        generate: run => (run.workout_type == 3 && run?.laps?.length > 3 ? run.laps.filter(e => calcPace(e.distance, e.elapsed_time) < new Time("8:00")).map(e => e.distance) : undefined),
     },
 
     avg_workout_split_time: {
-        TITLE: "Average Workout Split",
-        SYMBOL: "Seconds",
-        DISPLAY: Time.stringify,
-        GENERATE: run => {
-            let splits = units.workout_split_times.GENERATE(run);
+        title: "Average Workout Split",
+        symbol: "Seconds",
+        display: Time.stringify,
+        generate: run => {
+            let splits = units.workout_split_times.generate(run);
             if (splits?.length) {
                 //not nullish or length 0
                 return splits.reduce((p, c) => p + c, 0) / splits.length;
@@ -282,10 +295,10 @@ let units = {
         },
     },
     weekly_mileage: {
-        TITLE: "Weekly Mileage",
-        SYMBOL: "Miles",
-        DISPLAY: val => val.toFixed(1) + " Mi",
-        GENERATE: run => {
+        title: "Weekly Mileage",
+        symbol: "Miles",
+        display: val => val.toFixed(1) + " Mi",
+        generate: run => {
             const runDate = new Date(run.start_date);
             const millisPerDay = 1000 * 60 * 60 * 24;
             let dayOfWeek = runDate.getDay() == 0 ? 6 : runDate.getDay() - 1;
@@ -298,10 +311,10 @@ let units = {
         },
     },
     cumulative_weekly_mileage: {
-        TITLE: "Cumulative Weekly Mileage",
-        SYMBOL: "Miles",
-        DISPLAY: val => val.toFixed(1) + " Mi",
-        GENERATE: run => {
+        title: "Cumulative Weekly Mileage",
+        symbol: "Miles",
+        display: val => val.toFixed(1) + " Mi",
+        generate: run => {
             const runDate = new Date(run.start_date);
             const millisPerDay = 1000 * 60 * 60 * 24;
             let dayOfWeek = runDate.getDay() == 0 ? 6 : runDate.getDay() - 1;
@@ -315,10 +328,10 @@ let units = {
         },
     },
     rolling_weekly_mileage: {
-        TITLE: "Rolling Weekly Mileage",
-        SYMBOL: "Miles",
-        DISPLAY: val => val.toFixed(1) + " Mi",
-        GENERATE: run => {
+        title: "Rolling Weekly Mileage",
+        symbol: "Miles",
+        display: val => val.toFixed(1) + " Mi",
+        generate: run => {
             const runDate = new Date(run.start_date);
             const millisPerDay = 1000 * 60 * 60 * 24;
             const sevenDaysAgo = new Date(runDate.valueOf() - millisPerDay * 7);
@@ -328,10 +341,10 @@ let units = {
         },
     },
     cumulative_monthly_mileage: {
-        TITLE: "Cumulative Monthly Mileage",
-        SYMBOL: "Miles",
-        DISPLAY: val => val.toFixed(1) + " Mi",
-        GENERATE: run => {
+        title: "Cumulative Monthly Mileage",
+        symbol: "Miles",
+        display: val => val.toFixed(1) + " Mi",
+        generate: run => {
             const runDate = new Date(run.start_date);
             const millisPerDay = 1000 * 60 * 60 * 24;
             const monthDay = new Date(runDate);
@@ -345,10 +358,10 @@ let units = {
         },
     },
     cumulative_yearly_mileage: {
-        TITLE: "Cumulative Yearly Mileage",
-        SYMBOL: "Miles",
-        DISPLAY: val => val.toFixed(1) + " Mi",
-        GENERATE: run => {
+        title: "Cumulative Yearly Mileage",
+        symbol: "Miles",
+        display: val => val.toFixed(1) + " Mi",
+        generate: run => {
             const runDate = new Date(run.start_date);
             const millisPerDay = 1000 * 60 * 60 * 24;
             const yearDay = new Date(runDate);
@@ -362,6 +375,14 @@ let units = {
             return totalDist / 1609.34;
         },
     },
+    is_commute: {
+        title: "Is Commute",
+        symbol: "",
+        display: val => val,
+        generate: run => {
+            return run.commute ? 1 : 0;
+        },
+    },
 };
 
 let bestEffortDistances = ["400m", "1/2 mile", "1k", "1 mile", "2 mile", "5k", "10k", "15k", "10 mile", "20k", "half marathon", "30k", "marathon", "50k"];
@@ -371,10 +392,10 @@ let modularAxes = {
     best_efforts: {
         getUnit: dist => {
             return {
-                TITLE: "Best Effort (" + dist + ")",
-                SYMBOL: "Seconds",
-                DISPLAY: Time.stringify,
-                GENERATE: run => run.best_efforts?.find(e => e.name == dist)?.elapsed_time,
+                title: "Best Effort (" + dist + ")",
+                symbol: "Seconds",
+                display: Time.stringify,
+                generate: run => run.best_efforts?.find(e => e.name == dist)?.elapsed_time,
             };
         },
         title: "Distance",
@@ -385,10 +406,10 @@ let modularAxes = {
     equivalent_times: {
         getUnit: dist => {
             return {
-                TITLE: "Equiv. Race Time: (" + dist + ")",
-                SYMBOL: "Seconds",
-                DISPLAY: Time.stringify,
-                GENERATE: run => run.race_analysis?.equivalent_times?.[dist],
+                title: "Equiv. Race Time: (" + dist + ")",
+                symbol: "Seconds",
+                display: Time.stringify,
+                generate: run => run.race_analysis?.equivalent_times?.[dist],
             };
         },
         title: "Distance",
@@ -399,10 +420,10 @@ let modularAxes = {
     flat_equivalent: {
         getUnit: dist => {
             return {
-                TITLE: "Equiv. Race Time (Flat): (" + dist + ")",
-                SYMBOL: "Seconds",
-                DISPLAY: Time.stringify,
-                GENERATE: run => run.race_analysis?.flat_equivalent?.[dist],
+                title: "Equiv. Race Time (Flat): (" + dist + ")",
+                symbol: "Seconds",
+                display: Time.stringify,
+                generate: run => run.race_analysis?.flat_equivalent?.[dist],
             };
         },
         title: "Distance",
@@ -413,10 +434,10 @@ let modularAxes = {
     temp_equivalent: {
         getUnit: dist => {
             return {
-                TITLE: "Equiv. Race Time (60℉): (" + dist + ")",
-                SYMBOL: "Seconds",
-                DISPLAY: Time.stringify,
-                GENERATE: run => run.race_analysis?.temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
+                title: "Equiv. Race Time (60℉): (" + dist + ")",
+                symbol: "Seconds",
+                display: Time.stringify,
+                generate: run => run.race_analysis?.temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
             };
         },
         title: "Distance",
@@ -427,10 +448,10 @@ let modularAxes = {
     flat_temp_equivalent: {
         getUnit: dist => {
             return {
-                TITLE: "Equiv. Race Time (Flat/60℉): (" + dist + ")",
-                SYMBOL: "Seconds",
-                DISPLAY: Time.stringify,
-                GENERATE: run => run.race_analysis?.flat_temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
+                title: "Equiv. Race Time (Flat/60℉): (" + dist + ")",
+                symbol: "Seconds",
+                display: Time.stringify,
+                generate: run => run.race_analysis?.flat_temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
             };
         },
 
