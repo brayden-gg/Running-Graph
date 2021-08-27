@@ -4,21 +4,21 @@ let units = {
         symbol: "℉`",
         display: val => val.toFixed(1) + " ℉",
         generate: (_, weather) => weather.temperature,
-        supportedActivityTypes: "all",
+        supportedActivityTypes: ["Run", "Ride"],
     },
     apparentTemperature: {
         title: "Apparent Temperature",
         symbol: "℉`",
         display: val => val.toFixed(1) + " ℉",
         generate: (_, weather) => weather.apparentTemperature,
-        supportedActivityTypes: "all",
+        supportedActivityTypes: ["Run", "Ride"],
     },
     humidity: {
         title: "Humidity",
         symbol: "%",
         display: val => (val * 100).toFixed(0) + "%",
         generate: (_, weather) => weather.humidity,
-        supportedActivityTypes: "all",
+        supportedActivityTypes: ["Run", "Ride"],
     },
     date: {
         title: "Date",
@@ -158,43 +158,52 @@ let units = {
         symbol: "1-10",
         display: val => val,
         generate: run => run.perceived_exertion,
+        supportedActivityTypes: "all",
     },
     relative_effort: {
         title: "Relative Effort",
         symbol: "",
         display: val => val,
         generate: run => run.suffer_score,
+        supportedActivityTypes: "all",
     },
     calories: {
         title: "Calories",
         symbol: "Cal",
         display: val => val,
         generate: run => run.calories,
+        supportedActivityTypes: "all",
     },
     average_heartrate: {
         title: "Average Heartrate",
         symbol: "bpm",
         display: val => val,
         generate: run => run.average_heartrate,
+        supportedActivityTypes: "all",
     },
     best_efforts: {
         title: "Best Efforts",
+        supportedActivityTypes: ["Run"],
     },
 
     equivalent_times: {
         title: "Equiv. Race Time",
+        supportedActivityTypes: ["Run"],
     },
 
     flat_equivalent: {
         title: "Equiv. Race Time (Flat)",
+        supportedActivityTypes: ["Run"],
     },
 
     temp_equivalent: {
         title: "Equiv. Race Time (60℉)",
+        supportedActivityTypes: ["Run"],
     },
 
     flat_temp_equivalent: {
         title: "Equiv. Race Time (Flat/60℉)",
+        supportedActivityTypes: ["Run"],
     },
 
     toFlat: {
@@ -202,6 +211,7 @@ let units = {
         symbol: "Seconds",
         display: Time.stringify,
         generate: run => run?.race_analysis.toFlat,
+        supportedActivityTypes: ["Run"],
     },
 
     to60: {
@@ -209,6 +219,7 @@ let units = {
         symbol: "Seconds",
         display: Time.stringify,
         generate: run => run.race_analysis?.to60,
+        supportedActivityTypes: ["Run"],
     },
 
     toFlat_and_to60: {
@@ -216,6 +227,7 @@ let units = {
         symbol: "Seconds",
         display: Time.stringify,
         generate: run => run?.race_analysis.toFlat_and_to60,
+        supportedActivityTypes: ["Run"],
     },
 
     race_split_times: {
@@ -241,6 +253,7 @@ let units = {
             let point = data.dataset.data[data.dataIndex];
             return `rgba(${Math.min(point.y / predictTime(point.run), 1) * 255}, 28, 28, 0.6)`;
         },
+        supportedActivityTypes: ["Run"],
     },
 
     workout_split_times: {
@@ -266,6 +279,7 @@ let units = {
                 return run.laps.filter(e => calcPace(e.distance, e.elapsed_time) < new Time("8:00") && e.elapsed_time < new Time("12:30")).map(e => e.elapsed_time);
             }
         },
+        supportedActivityTypes: ["Run"],
     },
 
     workout_split_paces: {
@@ -273,6 +287,7 @@ let units = {
         symbol: "min/mi",
         display: Time.stringify,
         generate: run => (run.workout_type == 3 && run?.laps?.length > 3 ? run.laps.filter(e => calcPace(e.distance, e.elapsed_time) < new Time("8:00")).map(e => calcPace(e.distance, e.elapsed_time)) : undefined),
+        supportedActivityTypes: ["Run"],
     },
 
     workout_split_distances: {
@@ -280,6 +295,7 @@ let units = {
         symbol: "m",
         display: val => val + "m",
         generate: run => (run.workout_type == 3 && run?.laps?.length > 3 ? run.laps.filter(e => calcPace(e.distance, e.elapsed_time) < new Time("8:00")).map(e => e.distance) : undefined),
+        supportedActivityTypes: ["Run"],
     },
 
     avg_workout_split_time: {
@@ -293,6 +309,7 @@ let units = {
                 return splits.reduce((p, c) => p + c, 0) / splits.length;
             }
         },
+        supportedActivityTypes: ["Run"],
     },
     weekly_mileage: {
         title: "Weekly Mileage",
@@ -309,6 +326,7 @@ let units = {
             const totalDist = runsThisWeek.reduce((p, c) => (c.type == "Run" ? p + c.distance : p), 0);
             return totalDist / 1609.34;
         },
+        supportedActivityTypes: ["Run", "Ride"],
     },
     cumulative_weekly_mileage: {
         title: "Cumulative Weekly Mileage",
@@ -326,6 +344,7 @@ let units = {
             const totalDist = runsThisWeek.reduce((p, c) => (c.type == "Run" ? p + c.distance : p), 0);
             return totalDist / 1609.34;
         },
+        supportedActivityTypes: ["Run", "Ride"],
     },
     rolling_weekly_mileage: {
         title: "Rolling Weekly Mileage",
@@ -339,6 +358,7 @@ let units = {
             const totalDist = runsThisWeek.reduce((p, c) => (c.type == "Run" ? p + c.distance : p), 0);
             return totalDist / 1609.34;
         },
+        supportedActivityTypes: ["Run", "Ride"],
     },
     cumulative_monthly_mileage: {
         title: "Cumulative Monthly Mileage",
@@ -356,6 +376,7 @@ let units = {
             const totalDist = runsThisWeek.reduce((p, c) => (c.type == "Run" ? p + c.distance : p), 0);
             return totalDist / 1609.34;
         },
+        supportedActivityTypes: ["Run", "Ride"],
     },
     cumulative_yearly_mileage: {
         title: "Cumulative Yearly Mileage",
@@ -374,6 +395,7 @@ let units = {
             const totalDist = runsThisWeek.reduce((p, c) => (c.type == "Run" ? p + c.distance : p), 0);
             return totalDist / 1609.34;
         },
+        supportedActivityTypes: ["Run", "Ride"],
     },
     is_commute: {
         title: "Is Commute",
@@ -382,6 +404,7 @@ let units = {
         generate: run => {
             return run.commute ? 1 : 0;
         },
+        supportedActivityTypes: ["Ride"],
     },
 };
 
@@ -400,7 +423,7 @@ let modularAxes = {
         },
         title: "Distance",
         optionNames: bestEffortDistances,
-        optionValues: equivDistances,
+        optionValues: bestEffortDistances,
         defaultValue: "400m",
     },
     equivalent_times: {

@@ -36,11 +36,13 @@ let filterTextExc = new InputMenuElement({
 
 form.appendChild(filterTextExc.createElement());
 
+let allowedUnits = Object.keys(units).filter(e => units[e].supportedActivityTypes == "all" || units[e].supportedActivityTypes.includes(activityType.value));
+
 let xAxis = new DropdownMenuElement({
     queryParamName: "x",
     title: "X-Axis",
-    optionNames: Object.values(units).map(e => e.title),
-    optionValues: Object.keys(units),
+    optionNames: allowedUnits.map(e => units[e].title),
+    optionValues: allowedUnits,
     defaultValue: "date",
 });
 
@@ -61,8 +63,8 @@ if (modularAxes[xAxis.value]) {
 let yAxis = new DropdownMenuElement({
     queryParamName: "y",
     title: "Y-Axis",
-    optionNames: Object.values(units).map(e => e.title),
-    optionValues: Object.keys(units),
+    optionNames: allowedUnits.map(e => units[e].title),
+    optionValues: allowedUnits,
     defaultValue: "pace",
 });
 
@@ -378,7 +380,7 @@ function makeChart(data) {
             let splits_tag = "";
             let dots = false;
             let splits = value.run.laps;
-            if (splits) {
+            if (splits && splits.length > 1) {
                 if (value.run.splits_standard && splits.length <= 1) {
                     splits = value.run.splits_standard;
                 }
@@ -426,7 +428,7 @@ function makeChart(data) {
                                 ${
                                     value.run.description
                                         ? `
-                                <div style="float: left; width: ${!value.weather.error ? 200 : 400}px; text-align: center; margin-top: 10px">
+                                <div style="float: left; width: ${!value.weather.error && splits_tag ? 200 : 400}px; text-align: center; margin-top: 10px">
                                         <p class="run split"><b>Description:</b></p>
                                         <p class="run split" style="margin-left: 10px; margin-right: 10px; text-align: center">${value.run.description.replace(/\n/g, "<br>")}</p>
                                 </div>`
@@ -451,27 +453,27 @@ function makeChart(data) {
                                                     <p class="run split" id="predicted-distance-time"></p>
                                                 </b>
                                             </div>
-                                                <div style="float: left; width: 200px; text-align: center; margin-top: 0px;">
-                                                        <p class="run split"><b>Adjusted for Flat Course:</b></p>
-                                                        <p id="flat-course" class="run split"></p>
-                                                        <br>
-                                                        <p class="run split"><b>Adjusted for Hilly Course:</b></p>
-                                                        <p id="hilly-course" class="run split"></p>
-                                                        <p class="run split"><input value="68" type="number" id="hills" style="width: 45px"></input>ft Elevation Gain</p>
-                                                        
-                                                </div>
-                                                <div style="float: left; width: 200px; text-align: center; margin-top: 0px;">
+                                            <div style="float: left; width: 200px; text-align: center; margin-top: 0px;">
+                                                    <p class="run split"><b>Adjusted for Flat Course:</b></p>
+                                                    <p id="flat-course" class="run split"></p>
+                                                    <br>
+                                                    <p class="run split"><b>Adjusted for Hilly Course:</b></p>
+                                                    <p id="hilly-course" class="run split"></p>
+                                                    <p class="run split"><input value="68" type="number" id="hills" style="width: 45px"></input>ft Elevation Gain</p>
+                                                    
+                                            </div>
+                                            <div style="float: left; width: 200px; text-align: center; margin-top: 0px;">
 
-                                                        <p class="run split"><b id="eqTimesTitle">Equivalent Times: </b></p>
-                                                        <div id="equivalent-times"></div>
-                                                        <button id="defaultEqButton">Default</button>
-                                                        <button id="flatEqButton" style: "margin-left: 10px; margin-right: 10px">Flat</button>
-                                                        <button id="hillsEqButton">Hills</button>
-                                                </div>
+                                                    <p class="run split"><b id="eqTimesTitle">Equivalent Times: </b></p>
+                                                    <div id="equivalent-times"></div>
+                                                    <button id="defaultEqButton">Default</button>
+                                                    <button id="flatEqButton" style: "margin-left: 10px; margin-right: 10px">Flat</button>
+                                                    <button id="hillsEqButton">Hills</button>
+                                            </div>
 
                                         </div>
-                                        <div id = "button-container"style="float: right; width: 200px; text-align: center; margin-top: 20px;">
-                                        <button id="analysis-toggle-button" style="display: block; margin: auto;" onclick="toggleAnalysis()">View Race Analysis</button>
+                                        <div id = "button-container"style="float: ${splits_tag ? "right" : "left"}; width: ${splits_tag ? "200" : "400"}px; text-align: center; margin-top: 5px;">
+                                            <button id="analysis-toggle-button" style="display: block; margin: auto" onclick="toggleAnalysis()">View Race Analysis</button>
                                         </div>
                                         
                                 `
