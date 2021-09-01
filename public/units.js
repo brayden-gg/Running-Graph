@@ -1,15 +1,18 @@
+let bestEffortDistances = ["400m", "1/2 mile", "1k", "1 mile", "2 mile", "5k", "10k", "15k", "10 mile", "20k", "half marathon", "30k", "marathon", "50k"];
+let equivDistances = ["1500 m", "1 mile", "3000 m", "2 miles", "5k"];
+
 let units = {
     temperature: {
         title: "Temperature",
-        symbol: "℉`",
-        display: val => val.toFixed(1) + " ℉",
+        symbol: "ºF",
+        display: val => val.toFixed(1) + "ºF",
         generate: (_, weather) => weather.temperature,
         supportedActivityTypes: ["Run", "Ride"],
     },
     apparentTemperature: {
         title: "Apparent Temperature",
-        symbol: "℉`",
-        display: val => val.toFixed(1) + " ℉",
+        symbol: "ºF",
+        display: val => val.toFixed(1) + "ºF",
         generate: (_, weather) => weather.apparentTemperature,
         supportedActivityTypes: ["Run", "Ride"],
     },
@@ -80,11 +83,12 @@ let units = {
     },
     average_speed: {
         title: "Speed",
-        symbol: "m/s",
+        symbol: "Mi/hr",
         display: val => val.toFixed(1),
         generate: run => {
             let meters = 0;
             let seconds = 0;
+            let conversion = 3600 / 1609.344;
             if (run.laps && run.workout_type == 3) {
                 for (let s of run.laps) {
                     let pace = calcPace(s.distance, s.moving_time);
@@ -94,10 +98,10 @@ let units = {
                     }
                 }
                 if (seconds != 0) {
-                    return meters / seconds;
+                    return (meters / seconds) * conversion;
                 }
             }
-            return run.average_speed;
+            return run.average_speed * conversion;
         },
         supportedActivityTypes: ["Run", "Ride"],
     },
@@ -183,27 +187,57 @@ let units = {
     },
     best_efforts: {
         title: "Best Efforts",
+        symbol: "Seconds",
+        display: Time.stringify,
         supportedActivityTypes: ["Run"],
+
+        optionNames: bestEffortDistances,
+        defaultValue: "400m",
+        getGenerate: dist => run => run.best_efforts?.find(e => e.name == dist)?.elapsed_time,
     },
 
     equivalent_times: {
         title: "Equiv. Race Time",
+        symbol: "Seconds",
+        display: Time.stringify,
         supportedActivityTypes: ["Run"],
+
+        optionNames: equivDistances,
+        defaultValue: "1 mile",
+        getGenerate: dist => run => run.race_analysis?.equivalent_times?.[dist],
     },
 
     flat_equivalent: {
         title: "Equiv. Race Time (Flat)",
+        symbol: "Seconds",
+        display: Time.stringify,
         supportedActivityTypes: ["Run"],
+
+        optionNames: equivDistances,
+        defaultValue: "1 mile",
+        getGenerate: dist => run => run.race_analysis?.flat_equivalent?.[dist],
     },
 
     temp_equivalent: {
-        title: "Equiv. Race Time (60℉)",
+        title: "Equiv. Race Time (60ºF)",
+        symbol: "Seconds",
+        display: Time.stringify,
         supportedActivityTypes: ["Run"],
+
+        optionNames: equivDistances,
+        defaultValue: "1 mile",
+        getGenerate: dist => run => run.race_analysis?.temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
     },
 
     flat_temp_equivalent: {
-        title: "Equiv. Race Time (Flat/60℉)",
+        title: "Equiv. Race Time (Flat/60ºF)",
+        symbol: "Seconds",
+        display: Time.stringify,
         supportedActivityTypes: ["Run"],
+
+        optionNames: equivDistances,
+        defaultValue: "1 mile",
+        getGenerate: dist => run => run.race_analysis?.flat_temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
     },
 
     toFlat: {
@@ -238,11 +272,12 @@ let units = {
             if (run.workout_type !== 1) {
                 return;
             }
-            let matches = run.description.match(/(?<!\d)(?:\d{1,2}\:){1,2}\d{2}(?:\.\d+)?(?!\d)/g);
-            if (matches && matches.length > 1) {
-                matches = matches.map(e => Time.parse(e));
-                let index = 0;
+            let matches = run.description
+                .match(/\d{1,2}:(?:\d{1,2}:?)+(?:\.\d+)?/g)
+                ?.map(Time.parse)
+                ?.filter(e => !isNaN(e));
 
+            if (matches?.length > 1) {
                 return matches;
             }
 
@@ -267,7 +302,8 @@ let units = {
             let matches = run.description.match(/(?:\d{1,2}\:){1,2}\d{2}(?:\.\d+)?/g);
             if (run.name.match(/[1-4][05]0/)) {
                 //distance is 100m-450m: allow time formats without colon separator
-                let seconds = run.description.match(/(?<![\d.:])(?:\d{2})(?:\.\d+)?(?![\d.])/g);
+                let numbers = run.description.match(/\d+(?:\.\d+)?/g);
+                let seconds = numbers?.filter(e => +e >= 10 && +e <= 99);
                 matches = matches && seconds ? matches.concat(seconds) : matches ?? seconds;
             }
 
@@ -405,82 +441,5 @@ let units = {
             return run.commute ? 1 : 0;
         },
         supportedActivityTypes: ["Ride"],
-    },
-};
-
-let bestEffortDistances = ["400m", "1/2 mile", "1k", "1 mile", "2 mile", "5k", "10k", "15k", "10 mile", "20k", "half marathon", "30k", "marathon", "50k"];
-let equivDistances = ["1500 m", "1 mile", "3000 m", "2 miles", "5k"];
-
-let modularAxes = {
-    best_efforts: {
-        getUnit: dist => {
-            return {
-                title: "Best Effort (" + dist + ")",
-                symbol: "Seconds",
-                display: Time.stringify,
-                generate: run => run.best_efforts?.find(e => e.name == dist)?.elapsed_time,
-            };
-        },
-        title: "Distance",
-        optionNames: bestEffortDistances,
-        optionValues: bestEffortDistances,
-        defaultValue: "400m",
-    },
-    equivalent_times: {
-        getUnit: dist => {
-            return {
-                title: "Equiv. Race Time: (" + dist + ")",
-                symbol: "Seconds",
-                display: Time.stringify,
-                generate: run => run.race_analysis?.equivalent_times?.[dist],
-            };
-        },
-        title: "Distance",
-        optionNames: equivDistances,
-        optionValues: equivDistances,
-        defaultValue: "1 mile",
-    },
-    flat_equivalent: {
-        getUnit: dist => {
-            return {
-                title: "Equiv. Race Time (Flat): (" + dist + ")",
-                symbol: "Seconds",
-                display: Time.stringify,
-                generate: run => run.race_analysis?.flat_equivalent?.[dist],
-            };
-        },
-        title: "Distance",
-        optionNames: equivDistances,
-        optionValues: equivDistances,
-        defaultValue: "1 mile",
-    },
-    temp_equivalent: {
-        getUnit: dist => {
-            return {
-                title: "Equiv. Race Time (60℉): (" + dist + ")",
-                symbol: "Seconds",
-                display: Time.stringify,
-                generate: run => run.race_analysis?.temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
-            };
-        },
-        title: "Distance",
-        optionNames: equivDistances,
-        optionValues: equivDistances,
-        defaultValue: "1 mile",
-    },
-    flat_temp_equivalent: {
-        getUnit: dist => {
-            return {
-                title: "Equiv. Race Time (Flat/60℉): (" + dist + ")",
-                symbol: "Seconds",
-                display: Time.stringify,
-                generate: run => run.race_analysis?.flat_temp_equivalent?.[dist] ?? run.race_analysis?.equivalent_times?.[dist],
-            };
-        },
-
-        title: "Distance",
-        optionNames: equivDistances,
-        optionValues: equivDistances,
-        defaultValue: "1 mile",
     },
 };

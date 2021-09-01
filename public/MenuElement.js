@@ -28,10 +28,12 @@ class DropdownMenuElement extends MenuElement {
     constructor(options) {
         super(options);
         this.optionNames = options.optionNames;
-        this.optionValues = options.optionValues;
+        this.optionValues = options.optionValues ?? this.optionNames;
+
+        console.log(this.optionNames, this.optionValues);
 
         let query = new URLSearchParams(window.location.search);
-        this.value = query.get(this.queryParamName) ?? options.defaultValue ?? options.optionValues[0];
+        this.value = query.get(this.queryParamName) ?? options.defaultValue ?? this.optionValues[0];
     }
 
     createElement() {

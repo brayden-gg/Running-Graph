@@ -48,16 +48,14 @@ let xAxis = new DropdownMenuElement({
 
 form.appendChild(xAxis.createElement());
 
-if (modularAxes[xAxis.value]) {
+if (units[xAxis.value].optionNames) {
     let xDropdown = new DropdownMenuElement({
         queryParamName: "xDropdown",
-        ...modularAxes[xAxis.value],
+        ...units[xAxis.value],
     });
     form.appendChild(xDropdown.createElement());
-    let distance = xDropdown.value;
-    let newAxis = xAxis.value + "_" + distance;
-    units[newAxis] = modularAxes[xAxis.value].getUnit(distance);
-    xAxis.value = newAxis;
+    units[xAxis.value].generate = units[xAxis.value].getGenerate(xDropdown.value);
+    units[xAxis.value].title += " (" + xDropdown.value + ")";
 }
 
 let yAxis = new DropdownMenuElement({
@@ -70,16 +68,14 @@ let yAxis = new DropdownMenuElement({
 
 form.appendChild(yAxis.createElement());
 
-if (modularAxes[yAxis.value]) {
+if (units[yAxis.value].optionNames) {
     let yDropdown = new DropdownMenuElement({
         queryParamName: "yDropdown",
-        ...modularAxes[yAxis.value],
+        ...units[yAxis.value],
     });
     form.appendChild(yDropdown.createElement());
-    let distance = yDropdown.value;
-    let newAxis = yAxis.value + "_" + distance;
-    units[newAxis] = modularAxes[yAxis.value].getUnit(distance);
-    yAxis.value = newAxis;
+    units[yAxis.value].generate = units[yAxis.value].getGenerate(yDropdown.value);
+    units[yAxis.value].title += " (" + yDropdown.value + ")";
 }
 
 let enableTrendLine = new CheckboxMenuElement({
@@ -102,7 +98,7 @@ let yLabel = `${units[yAxis.value].title} (${units[yAxis.value].symbol})`;
     data = {
         weather: json.weather,
         equiv: json.equiv,
-        strava: json.strava.map((e, i) => ({ ...e, race_analysis: json.equiv[i] })),
+        strava: json.strava.map((e, i) => ({ ...e, race_analysis: json.equiv[i], index: i })),
     };
 
     console.log(data);
@@ -174,8 +170,8 @@ let yLabel = `${units[yAxis.value].title} (${units[yAxis.value].symbol})`;
 })();
 
 function makeChart(data) {
-    let stravaData = data.strava.filter(e => (e.name ? e.name.match(new RegExp(filterTextInc.value, "i")) != null && e.name.match(new RegExp(filterTextExc.value, "i")) == null : false));
-    let weatherData = data.weather.filter((e, i) => (data.strava[i].name ? data.strava[i].name.match(new RegExp(filterTextInc.value, "i")) != null && data.strava[i].name.match(new RegExp(filterTextExc.value, "i")) == null : false));
+    let stravaData = data.strava.filter(e => e?.name?.match(new RegExp(filterTextInc.value, "i")) && !e?.name?.match(new RegExp(filterTextExc.value, "i")));
+    let weatherData = data.weather.filter((e, i) => stravaData.map(e => e.index).includes(i));
 
     console.log(xAxis.value, yAxis.value);
 

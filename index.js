@@ -197,7 +197,7 @@ app.get("/reloadAtIndex/:index/:runId", async (request, response) => {
 
     let weatherReplace;
 
-    if (stravaJson.start_latlng) {
+    if (stravaJson.start_latlng && stravaJson.start_latlng.length) {
         const weatherResp = await fetch(`https://api.darksky.net/forecast/${process.env.WEATHER_KEY}/${stravaJson.start_latlng[0]},${stravaJson.start_latlng[1]},${new Date(stravaJson.start_date).valueOf() / 1000}`);
         const weatherJson = await weatherResp.json();
         weatherReplace = weatherJson.error ? weatherJson : weatherJson.currently;
@@ -210,10 +210,8 @@ app.get("/reloadAtIndex/:index/:runId", async (request, response) => {
     STRAVA_DATA.splice(index, 1);
     STRAVA_DATA = [...STRAVA_DATA.slice(0, index), stravaJson, ...STRAVA_DATA.slice(index)];
 
-    if (!stravaJson.error && !weatherReplace.error) {
-        WEATHER_DATA.splice(index, 1);
-        WEATHER_DATA = [...WEATHER_DATA.slice(0, index), weatherReplace, ...WEATHER_DATA.slice(index)];
-    }
+    WEATHER_DATA.splice(index, 1);
+    WEATHER_DATA = [...WEATHER_DATA.slice(0, index), weatherReplace, ...WEATHER_DATA.slice(index)];
 
     let analysisIndex = ANALYSIS_DATA.length - STRAVA_DATA.length + index + 1;
     if (analysisIndex > 0) {
@@ -228,7 +226,10 @@ app.get("/reloadAtIndex/:index/:runId", async (request, response) => {
 
     await fsp.writeFile("race-analysis.json", JSON.stringify(ANALYSIS_DATA));
     console.log("Last " + analysisIndex + " Race Analysis Deleted Successfully");
-    response.end();
+    response.json({
+        strava: stravaJson,
+        weather: weatherReplace,
+    });
 });
 
 app.get("/fixCode/:code", async (request, response) => {
