@@ -7,3 +7,4 @@ weather-data.json
 package-lock.json
 .env
 .vscode/launch.json
+.DS_Store

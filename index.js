@@ -10,12 +10,6 @@ const server = app.listen(3000, () => {
     console.log("Listening at 3000");
 });
 
-// process.on('SIGTERM', () => {
-//     server.close(() => {
-//         console.log('Process terminated')
-//     })
-// })
-
 fs.readFile("config.json", "utf8", (err, data) => {
     if (err) throw err;
     config = JSON.parse(data);
@@ -33,11 +27,6 @@ app.get("/weather/:loc", async (request, response) => {
     const json = await apiResp.json();
     response.json(json.currently);
 });
-// process.on('SIGTERM', () => {
-//     server.close(() => {
-//         process.exit();
-//     });
-// })
 
 app.get("/quit", async (request, response) => {
     response.end();
