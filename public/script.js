@@ -566,8 +566,10 @@ async function getEquivalentTimes(run) {
 
     let results = {};
 
-    for (let i = 2; i < 7; i++) {
-        results[table[i].children[0].innerText] = Time.parse(table[i].children[1].innerText);
+    for (let i = 2; i < 10; i++) {
+        let eventName = table[i].children[0].innerText;
+
+        results[eventName] = Time.parse(table[i].children[1].innerText);
     }
     return results;
 }
@@ -628,6 +630,7 @@ async function recalculateHills(run) {
 }
 
 function setEquivalentTimes(run, mode) {
+    let eventsWeCareAbout = ["1 mile", "3000 m", "2 miles", "5K", "8K", "10K"];
     let eq = run.race_analysis[mode];
     let eqDiv = document.getElementById("equivalent-times");
 
@@ -647,7 +650,9 @@ function setEquivalentTimes(run, mode) {
 
     let eqText = "";
     for (let t in eq) {
-        eqText += `<p class="run split" style="width: 90px; float: left">${t}</p><p class="run split" style="width: 90px; float: left">${units.elapsed_time.display(eq[t], 1)}</p>`;
+        if (eventsWeCareAbout.includes(t)) {
+            eqText += `<p class="run split" style="width: 90px; float: left">${t}</p><p class="run split" style="width: 90px; float: left">${units.elapsed_time.display(eq[t], 1)}</p>`;
+        }
     }
 
     eqDiv.innerHTML = eqText;

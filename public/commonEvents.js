@@ -52,7 +52,11 @@ let commonEvents = [
         distance: 4023.35,
     },
     {
-        names: ["invite"],
+        names: ["invite", "5k"],
         distance: 5000,
+    },
+    {
+        names: ["invite", "8k"],
+        distance: 8000,
     },
 ];
