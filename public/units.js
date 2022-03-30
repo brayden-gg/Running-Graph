@@ -1,5 +1,5 @@
 let bestEffortDistances = ["400m", "1/2 mile", "1k", "1 mile", "2 mile", "5k", "10k", "15k", "10 mile", "20k", "half marathon", "30k", "marathon", "50k"];
-let equivDistances = ["1500 m", "1 mile", "3000 m", "2 miles", "5k"];
+let equivDistances = ["1 mile", "3000 m", "2 miles", "5K", "8K", "10K"];
 
 let units = {
     temperature: {
@@ -272,7 +272,7 @@ let units = {
             if (run.workout_type !== 1) {
                 return;
             }
-            let matches = run.description
+            let matches = (run.description + run.private_note)
                 .match(/\d{1,2}:(?:\d{1,2}:?)+(?:\.\d+)?/g)
                 ?.map(Time.parse)
                 ?.filter(e => !isNaN(e));
@@ -299,10 +299,10 @@ let units = {
             if (run.workout_type !== 3) {
                 return;
             }
-            let matches = run.description.match(/(?:\d{1,2}\:){1,2}\d{2}(?:\.\d+)?/g);
+            let matches = (run.description + run.private_note).match(/(?:\d{1,2}\:){1,2}\d{2}(?:\.\d+)?/g);
             if (run.name.match(/[1-4][05]0/)) {
                 //distance is 100m-450m: allow time formats without colon separator
-                let numbers = run.description.match(/\d+(?:\.\d+)?/g);
+                let numbers = (run.description + run.private_note).match(/\d+(?:\.\d+)?/g);
                 let seconds = numbers?.filter(e => +e >= 10 && +e <= 99);
                 matches = matches && seconds ? matches.concat(seconds) : matches ?? seconds;
             }

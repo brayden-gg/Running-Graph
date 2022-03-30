@@ -32,7 +32,7 @@ let commonEvents = [
         distance: 1000,
     },
     {
-        names: ["1600", "DMR", "7min"],
+        names: ["1600", "DMR", "7min", "relay", "leg"],
         distance: 1600,
     },
     {

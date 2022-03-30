@@ -59,8 +59,9 @@ app.get("/update", async (request, response) => {
 
         if (json.errors) {
             //need to fix code
+            console.log(json.errors);
             response.json(json);
-            break;
+            return;
         }
 
         for (let i = 0; i < json.length; i++) {
@@ -91,6 +92,7 @@ app.get("/update", async (request, response) => {
                     error: "No location data",
                 });
             }
+            console.log(WEATHER_DATA[WEATHER_DATA.length - 1]);
         }
 
         STRAVA_DATA.unshift(stravaJson);

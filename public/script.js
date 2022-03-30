@@ -1,6 +1,6 @@
 document.getElementById("graph").width = window.outerWidth - 500;
 
-const SLOW = new Time("12:00");
+const SLOW = new Time("9:30");
 
 let points = [];
 
@@ -109,7 +109,11 @@ let yLabel = `${units[yAxis.value].title} (${units[yAxis.value].symbol})`;
     let updatedJson = await updatedReq.json();
 
     if (updatedJson.errors) {
-        window.location.replace(`https://www.strava.com/oauth/authorize?client_id=${config.client_id}&response_type=code&redirect_uri=http://localhost:3000/exchange_token.html${window.location.search}&approval_prompt=force&scope=activity:read_all`);
+        console.error(updatedJson.errors);
+        return;
+        // if (updatedJson.errors.field != "rate limit") {
+        //     window.location.replace(`https://www.strava.com/oauth/authorize?client_id=${config.client_id}&response_type=code&redirect_uri=http://localhost:3000/exchange_token.html${window.location.search}&approval_prompt=force&scope=activity:read_all`);
+        // }
     }
 
     let addToAnalysis = [];
@@ -367,29 +371,29 @@ function makeChart(data) {
             let category = activePoint[0]._datasetIndex;
             let idx = activePoint[0]._index;
 
-            let value = chartData.datasets[category].data[idx];
+            let { run, weather } = chartData.datasets[category].data[idx];
 
-            console.log(value, activePoint[0]);
+            console.log(run, weather, activePoint[0]);
 
             let widget = document.getElementById("widget");
 
             let splits_tag = "";
             let dots = false;
-            let splits = value.run.laps;
+            let splits = run.laps;
             if (splits && splits.length > 1) {
-                if (value.run.splits_standard && splits.length <= 1) {
-                    splits = value.run.splits_standard;
+                if (run.splits_standard && splits.length <= 1) {
+                    splits = run.splits_standard;
                 }
                 let show = splits.filter(e => {
                     let pace = calcPace(e.distance, e.moving_time);
-                    return value.run.workout_type != 3 || pace < SLOW; //only dont't show it if it's a workout AND the pace is too slow
+                    return run.workout_type != 3 || pace < SLOW; //only dont't show it if it's a workout AND the pace is too slow
                 });
                 for (let i = 0; i < show.length; i++) {
                     let s = show[i];
                     let pace = calcPace(s.distance, s.moving_time);
-                    if (value.weather.error || i < 5 || i > show.length - 6 || show.length < 11) {
-                        splits_tag += `<p class = "run split"> ${value.run.workout_type != 3 && value.run.workout_type != 1 ? "Lap " + (i + 1) + " - " : ""}
-                                    ${(s.distance / 1609.34).toFixed(1)} Mi - ${value.run.workout_type == 3 || value.run.workout_type == 1 ? " Time: " + units.elapsed_time.display(s.elapsed_time, 1) + " - " : ""}
+                    if (weather.error || i < 5 || i > show.length - 6 || show.length < 11) {
+                        splits_tag += `<p class = "run split"> ${run.workout_type != 3 && run.workout_type != 1 ? "Lap " + (i + 1) + " - " : ""}
+                                    ${(s.distance / 1609.34).toFixed(1)} Mi - ${run.workout_type == 3 || run.workout_type == 1 ? " Time: " + units.elapsed_time.display(s.elapsed_time, 1) + " - " : ""}
                                     ${pace.toString()} min/mi</p>`;
                     } else if (!dots) {
                         splits_tag += `<p class = "run split"> ... </p>`;
@@ -398,22 +402,24 @@ function makeChart(data) {
                 }
             }
 
+            let combinedDescription = (run.description || "") + "\n" + (run.private_note || "");
+
             widget.innerHTML = `
-                                <iframe height="${!value.weather.error ? 300 : 131}" width="390" frameborder='0' allowtransparency='true' scrolling='no'    style="float: left; margin: 0px; margin-right: 50px; border-radius: 10px" src='https://www.strava.com/activities/${value.run.id}/embed/${value.run.embed_token}'></iframe>
+                                <iframe height="${!weather.error ? 300 : 131}" width="390" frameborder='0' allowtransparency='true' scrolling='no'    style="float: left; margin: 0px; margin-right: 50px; border-radius: 10px" src='https://www.strava.com/activities/${run.id}/embed/${run.embed_token}'></iframe>
                                 ${
-                                    !value.weather.error
+                                    !weather.error
                                         ? `
                                 <div style="border-bottom: 1px solid #666; height: 400px; background-color: rgba(255, 255, 255, 0);" >
                                         <div style="float: left; text-align: center; width: 133px;"> 
-                                                <h1 class="run stat" >&nbsp;${value.weather.temperature.toFixed(0)}&deg; </h1>
+                                                <h1 class="run stat" >&nbsp;${weather.temperature.toFixed(0)}&deg; </h1>
                                                 <p class="run " style="margin-top: 0px">Temperature</p>
                                         </div>
                                         <div style="float: left; text-align: center; width: 133px;"> 
-                                                <h1 class="run stat">&nbsp;${value.weather.apparentTemperature.toFixed(0)}&deg; </h1>
+                                                <h1 class="run stat">&nbsp;${weather.apparentTemperature.toFixed(0)}&deg; </h1>
                                                 <p class="run " style="margin-top: 0px">Feels Like</p>
                                         </div>
                                         <div style= "float: left; text-align: center; width: 133px;"> 
-                                                <h1 class="run stat">&nbsp;${(value.weather.humidity * 100).toFixed(0)}%</h1>
+                                                <h1 class="run stat">&nbsp;${(weather.humidity * 100).toFixed(0)}%</h1>
                                                 <p class= "run" style="margin-top: 0px">Humidity</p>
                                         </div>
                                 </div>
@@ -422,18 +428,18 @@ function makeChart(data) {
                                 }
                                 <div id="not-analysis">
                                 ${
-                                    value.run.description
+                                    combinedDescription
                                         ? `
-                                <div style="float: left; width: ${!value.weather.error && splits_tag ? 200 : 400}px; text-align: center; margin-top: 10px">
+                                <div style="float: left; width: ${!weather.error && splits_tag ? 200 : 400}px; text-align: center; margin-top: 10px">
                                         <p class="run split"><b>Description:</b></p>
-                                        <p class="run split" style="margin-left: 10px; margin-right: 10px; text-align: center">${value.run.description.replace(/\n/g, "<br>")}</p>
+                                        <p class="run split" style="margin-left: 10px; margin-right: 10px; text-align: center">${combinedDescription.replace(/\n/g, "<br>")}</p>
                                 </div>`
                                         : ""
                                 }
                                 ${
                                     splits_tag
                                         ? `
-                                <div style="float: left; width: ${value.run.description && !value.weather.error ? 200 : 400}px; text-align: center; margin-top: 10px">
+                                <div style="float: left; width: ${combinedDescription && !weather.error ? 200 : 400}px; text-align: center; margin-top: 10px">
                                         <p class="run split"><b>Splits: </b></p>
                                         ${splits_tag}
                                 </div>`
@@ -441,7 +447,7 @@ function makeChart(data) {
                                 }
                         </div>
                                 ${
-                                    value.run.workout_type == 1
+                                    run.workout_type == 1
                                         ? `
                                         <div id="race-analysis" style="float: left; width: 400px; text-align: center; margin-top: 10px; display: none;">
                                             <div style="float: left; width: 400px; text-align: center; margin-top: 0px;">
@@ -477,21 +483,21 @@ function makeChart(data) {
                                 }
                                 `;
 
-            if (value.run.workout_type == 1) {
-                let run = {
-                    ...value.run,
-                    elapsed_time: predictTime(value.run),
-                    distance: predictDistance(value.run),
+            if (run.workout_type == 1) {
+                let predictedRun = {
+                    ...run,
+                    elapsed_time: predictTime(run),
+                    distance: predictDistance(run),
                 };
 
-                document.getElementById("predicted-distance-time").innerText = run.distance + "m: " + units.elapsed_time.display(run.elapsed_time, 2);
+                document.getElementById("predicted-distance-time").innerText = predictedRun.distance + "m: " + units.elapsed_time.display(predictedRun.elapsed_time, 2);
 
-                setEquivalentTimes(run, "equivalent_times");
+                setEquivalentTimes(predictedRun, "equivalent_times");
 
                 let flatPara = document.getElementById("flat-course");
                 let hillyPara = document.getElementById("hilly-course");
                 let hillInput = document.getElementById("hills");
-                let adjustedHills = await getAdjustedHillsTime(run, hillInput.value);
+                let adjustedHills = await getAdjustedHillsTime(predictedRun, hillInput.value);
 
                 flatPara.innerText = units.elapsed_time.display(adjustedHills.toFlat, 1);
                 hillyPara.innerText = units.elapsed_time.display(adjustedHills.toHilly, 1);
@@ -502,25 +508,25 @@ function makeChart(data) {
                 let hillsInput = document.getElementById("hills");
 
                 if (hillsInput) {
-                    defaultEqButton.onclick = () => setEquivalentTimes(run, "equivalent_times");
-                    flatEqButton.onclick = () => setEquivalentTimes(run, "flat_equivalent");
+                    defaultEqButton.onclick = () => setEquivalentTimes(predictedRun, "equivalent_times");
+                    flatEqButton.onclick = () => setEquivalentTimes(predictedRun, "flat_equivalent");
 
                     hillsEqButton.onclick = async () => {
-                        let hillyRun = await getEquivalentTimes({
-                            distance: run.distance,
+                        let hills_equivalent = await getEquivalentTimes({
+                            distance: predictedRun.distance,
                             elapsed_time: adjustedHills.toHilly,
                         });
                         setEquivalentTimes(
                             {
                                 race_analysis: {
-                                    hills_equivalent: hillyRun,
+                                    hills_equivalent,
                                 },
                             },
                             "hills_equivalent"
                         );
                     };
 
-                    hillsInput.onchange = () => recalculateHills(run);
+                    hillsInput.onchange = () => recalculateHills(predictedRun);
                 }
             }
         }
@@ -598,7 +604,7 @@ async function getAdjustedHillsTime(run, hypclimb) {
 }
 
 async function getAdjustedTempTime(run, weather) {
-    if (weather.error) {
+    if (weather?.error) {
         return run.elapsed_time;
     }
 
@@ -630,7 +636,6 @@ async function recalculateHills(run) {
 }
 
 function setEquivalentTimes(run, mode) {
-    let eventsWeCareAbout = ["1 mile", "3000 m", "2 miles", "5K", "8K", "10K"];
     let eq = run.race_analysis[mode];
     let eqDiv = document.getElementById("equivalent-times");
 
@@ -650,7 +655,7 @@ function setEquivalentTimes(run, mode) {
 
     let eqText = "";
     for (let t in eq) {
-        if (eventsWeCareAbout.includes(t)) {
+        if (equivDistances.includes(t)) {
             eqText += `<p class="run split" style="width: 90px; float: left">${t}</p><p class="run split" style="width: 90px; float: left">${units.elapsed_time.display(eq[t], 1)}</p>`;
         }
     }
@@ -681,7 +686,7 @@ function predictDistance(run) {
         sum += (distanceError[i] <= bigTolorance) * 1;
         sum += (distanceError[i] <= smallTolorance) * 3;
         sum -= distanceError[i] / 10;
-        probabilities[i] = sum;
+        probabilities[i] = sum * sum;
     }
     if (run.distance >= Math.max(...commonEvents.map(e => e.distance))) {
         return Math.max(...commonEvents.map(e => e.distance));
@@ -689,7 +694,7 @@ function predictDistance(run) {
 
     let highestIndex = probabilities.reduce((p, c, i, arr) => (c >= arr[p] ? i : p), 0);
     let sum = probabilities.reduce((p, c) => p + c);
-    if (sum <= 1) {
+    if (sum < 0.9) {
         return run.distance;
     }
 
@@ -734,7 +739,8 @@ function predictDistance_workout(run, splitDistance) {
 
 function predictTime(run) {
     let original = run.elapsed_time;
-    let captured = run.description ? run.description.match(/(?:\d+\:){0,3}\d+(?:\.\d+)?/g) || [] : [];
+    let combinedDescription = (run.description || "") + (run.private_note || "");
+    let captured = combinedDescription.match(/(?:\d+\:){0,3}\d+(?:\.\d+)?/g) || [];
     let best = Infinity;
     for (let c of captured) {
         let t = new Time(c);
@@ -748,6 +754,7 @@ function predictTime(run) {
 }
 
 async function reloadAtIndex(index, id) {
+    id = id || data.strava[index].id;
     await fetch("/reloadAtIndex/" + index + "/" + id);
     console.log("Reloaded");
 }
